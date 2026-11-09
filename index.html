@@ -750,6 +750,7 @@ async function signIn({ switchAccount = false } = {}) {
           const u = await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + gToken.t } })).json();
           state.profile = { name: u.given_name || u.name || nameFromEmail(u.email), email: u.email || "" };
           store.set("profile", state.profile);
+          renderEmbeds();
         } catch {}
         boot();
       }
@@ -1128,7 +1129,10 @@ function renderEmbeds() {
     $("#boardSlot").innerHTML = note + `<div class="row">${openLink(plain(CONFIG.links.bulletinDoc), "📌 Open the bulletin board")}</div>`;
     return;
   }
-  $("#formSlot").innerHTML = `<iframe class="embed form" title="Add grocery item" loading="lazy" src="${esc(CONFIG.links.groceryForm)}">Loading…</iframe>`;
+  // Ask Google to use the same account that signed in to this site (Google otherwise uses the browser's default account).
+  const who = state.profile && state.profile.email;
+  const asUser = u => who ? u + (u.includes("?") ? "&" : "?") + "authuser=" + encodeURIComponent(who) : u;
+  $("#formSlot").innerHTML = `<iframe class="embed form" title="Add grocery item" loading="lazy" src="${esc(asUser(CONFIG.links.groceryForm))}">Loading…</iframe>`;
   $("#sheetSlot").innerHTML = `<iframe class="embed sheet" title="Current grocery list" loading="lazy" src="${esc(CONFIG.links.grocerySheet)}"></iframe>
     <p class="small"><a href="${esc(CONFIG.links.grocerySheet.replace("widget=true&", ""))}" target="_blank" rel="noopener">Open the list in a new tab ↗</a></p>`;
   $("#boardSlot").innerHTML = `<iframe class="embed doc" title="Family bulletin board" loading="lazy" src="${esc(CONFIG.links.bulletinDoc)}"></iframe>
