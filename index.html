@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Heilman Family Command Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME TOKENS (overwritten per season by JS)
+   ============================================================ */
+:root{
+  --bg1:#fff6ec; --bg2:#fde7d2; --accent:#c8642c; --accent2:#7a8b3a;
+  --ink:#3b2a1e; --muted:#7d6a5c; --card:#fffdf9; --line:#efe1d2;
+  --hero-ink:#3b2a1e; --shadow:0 2px 0 rgba(60,40,20,.04),0 8px 24px rgba(60,40,20,.08);
+  --radius:18px;
+  --font-head:"Fraunces",Georgia,serif;
+  --font-body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-hand:"Caveat","Comic Sans MS",cursive;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;max-width:100%;overflow-x:hidden}
+html{background:var(--bg2)}
+body{
+  font-family:var(--font-body);color:var(--ink);
+  background:linear-gradient(180deg,var(--bg1) 0%,var(--bg2) 100%) fixed;
+  min-height:100vh;line-height:1.45;-webkit-font-smoothing:antialiased;
+}
+a{color:var(--accent)}
+img,iframe{max-width:100%}
+button{font-family:inherit}
+h1,h2,h3{font-family:var(--font-head);margin:0;line-height:1.15;letter-spacing:-.01em}
+.wrap{max-width:1240px;margin:0 auto;padding:0 18px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ============================== HEADER / NAV */
+header.top{
+  position:sticky;top:0;z-index:40;
+  background:color-mix(in srgb,var(--card) 88%,transparent);
+  backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.top .wrap{display:flex;align-items:center;gap:14px;min-height:62px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);min-width:0}
+.brand .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+  background:var(--accent);color:#fff;font-size:20px;flex:none}
+.brand b{font-family:var(--font-head);font-size:1.12rem;white-space:nowrap}
+.brand small{display:block;color:var(--muted);font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+nav.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav.tabs a{
+  text-decoration:none;color:var(--ink);font-weight:700;font-size:.92rem;
+  padding:8px 12px;border-radius:999px;white-space:nowrap;transition:background .15s;
+}
+nav.tabs a:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+nav.tabs a[aria-current="page"]{background:var(--accent);color:#fff}
+.menu-btn{display:none;margin-left:auto;border:1px solid var(--line);background:var(--card);
+  border-radius:999px;padding:8px 14px;font-weight:800;color:var(--ink);cursor:pointer}
+@media (max-width:1060px){
+  .menu-btn{display:inline-flex;gap:8px;align-items:center}
+  nav.tabs{display:none;width:100%;flex-direction:column;padding:6px 0 12px;margin:0}
+  nav.tabs.open{display:flex}
+  nav.tabs a{padding:12px 14px;border-radius:12px;font-size:1rem}
+}
+
+/* ============================== LAYOUT PRIMITIVES */
+main{padding:22px 0 60px}
+section.page{display:none}
+section.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 18px}
+.page-head h1{font-size:clamp(1.6rem,3.4vw,2.3rem)}
+.page-head p{margin:4px 0 0;color:var(--muted)}
+.grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px 20px;min-width:0}
+.card h2{font-size:1.18rem;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.card h2 .tag{margin-left:auto}
+.span-2{grid-column:span 2}
+@media (max-width:760px){.span-2{grid-column:auto}}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;
+  background:var(--accent);color:#fff;font-weight:800;font-size:.96rem;
+  padding:11px 18px;border-radius:999px;text-decoration:none;box-shadow:0 2px 0 rgba(0,0,0,.08)}
+.btn:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:.86rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.notice{border-radius:14px;padding:14px 16px;background:color-mix(in srgb,var(--accent) 9%,var(--card));
+  border:1px dashed color-mix(in srgb,var(--accent) 45%,transparent);font-size:.95rem}
+.notice b{display:block;margin-bottom:4px}
+.notice.warn{background:#fff6e0;border-color:#e2b04a;color:#5a4410}
+.empty{color:var(--muted);font-style:italic;padding:6px 0}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:.74rem;font-weight:800;
+  padding:3px 9px;border-radius:999px;background:color-mix(in srgb,var(--c,#999) 16%,#fff);color:color-mix(in srgb,var(--c,#999) 75%,#000);
+  white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c,#999);flex:none;display:inline-block}
+.sync{font-size:.8rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.spinner{width:14px;height:14px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================== HERO (seasonal) */
+.hero{position:relative;overflow:hidden;border-radius:26px;padding:34px 30px 46px;margin-bottom:20px;
+  color:var(--hero-ink);
+  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent2) 30%,transparent) 0%,transparent 55%),
+             radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--accent) 34%,transparent) 0%,transparent 60%),
+             linear-gradient(135deg,var(--card),color-mix(in srgb,var(--bg2) 70%,var(--card)));
+  border:1px solid var(--line);box-shadow:var(--shadow)}
+.hero .kicker{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;color:var(--accent)}
+.hero h1{font-size:clamp(1.9rem,5vw,3.2rem);margin:6px 0 6px;max-width:22ch}
+.hero p{margin:0;font-size:1.06rem;max-width:52ch}
+.hero .wave{position:absolute;left:0;right:0;bottom:-1px;width:100%;height:56px;display:block}
+.deco{position:absolute;inset:0;pointer-events:none}
+.deco span{position:absolute;font-size:var(--s,28px);opacity:.9;animation:drift var(--d,9s) ease-in-out infinite alternate;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.08))}
+@keyframes drift{from{transform:translateY(0) rotate(-8deg)}to{transform:translateY(14px) rotate(10deg)}}
+@media (prefers-reduced-motion:reduce){.deco span{animation:none}section.page.active{animation:none}}
+@media (max-width:640px){.hero{padding:26px 20px 44px}.deco span{opacity:.45}.deco span:nth-child(n+4){display:none}.sticky{font-size:1.05rem;padding:6px 10px}.sticky-row{gap:8px}#menuLabel{max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+
+/* ============================== COUNTDOWN / WEATHER */
+.count{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;margin-top:6px}
+.count div{background:color-mix(in srgb,var(--accent) 10%,var(--card));border-radius:14px;padding:10px 4px}
+.count b{display:block;font-family:var(--font-head);font-size:clamp(1.4rem,4vw,2rem);color:var(--accent)}
+.count small{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.weather{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.weather .big{font-size:3rem;line-height:1}
+.weather .temp{font-family:var(--font-head);font-size:2.4rem;font-weight:700}
+
+/* ============================== EVENT LISTS */
+.ev-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.ev{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border-radius:12px;cursor:pointer;
+  background:color-mix(in srgb,var(--c,#999) 7%,var(--card));border-left:4px solid var(--c,#999);
+  text-align:left;width:100%;border-top:0;border-right:0;border-bottom:0;color:inherit;font:inherit}
+.ev:hover{background:color-mix(in srgb,var(--c,#999) 14%,var(--card))}
+.ev .when{flex:0 0 76px;font-weight:800;font-size:.84rem;color:var(--muted);padding-top:1px}
+.ev .what{min-width:0;flex:1}
+.ev .what b{display:block;overflow-wrap:anywhere}
+.ev .what span{font-size:.82rem;color:var(--muted);overflow-wrap:anywhere}
+.daygroup h3{font-family:var(--font-body);font-size:.84rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 6px}
+.daygroup:first-child h3{margin-top:0}
+.summary-line{font-size:1.02rem;margin:0 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.highlight{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;
+  background:color-mix(in srgb,var(--c,#999) 10%,var(--card));cursor:pointer;border:0;width:100%;text-align:left;font:inherit;color:inherit}
+.highlight .em{font-size:1.5rem}
+.highlight b{display:block;overflow-wrap:anywhere}
+
+/* ============================== WEEK AT A GLANCE */
+.week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
+.wday{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;min-height:180px;min-width:0;box-shadow:var(--shadow)}
+.wday.today{outline:3px solid var(--accent);outline-offset:-1px}
+.wday .dh{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
+.wday .dh b{font-family:var(--font-head);font-size:1.5rem}
+.wday .dh span{font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.wday .ev{flex-direction:column;gap:2px;padding:8px}
+.wday .ev .when{flex:none}
+@media (max-width:1060px){.week{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}.wday{min-height:0}}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+
+/* ============================== MONTH CALENDAR */
+.cal-toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.cal-toolbar h2{font-size:1.5rem;min-width:0;margin-right:auto}
+.cal-toolbar .navgrp{display:flex;gap:8px}
+.gembed{width:100%;height:clamp(480px,75vh,820px);border:0;border-radius:12px;margin-top:14px;background:#fff}
+.filters{margin-bottom:14px}
+.filters details summary{cursor:pointer;font-weight:800;margin-bottom:8px}
+.fchip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;cursor:pointer;
+  border:2px solid var(--c,#999);background:color-mix(in srgb,var(--c,#999) 14%,var(--card));font-weight:700;font-size:.86rem;color:var(--ink)}
+.fchip[aria-pressed="false"]{background:var(--card);opacity:.55;border-style:dashed}
+.month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--line);gap:1px}
+.month .dow{background:color-mix(in srgb,var(--accent) 10%,var(--card));text-align:center;font-weight:800;font-size:.76rem;
+  text-transform:uppercase;letter-spacing:.08em;padding:8px 2px;color:var(--muted)}
+.mcell{background:var(--card);min-height:112px;padding:6px;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:3px;border:0;text-align:left;font:inherit;color:inherit}
+.mcell.out{background:color-mix(in srgb,var(--card) 70%,var(--bg2));color:var(--muted)}
+.mcell.today .num{background:var(--accent);color:#fff}
+.mcell.sel{box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--accent) 60%,transparent)}
+.mcell .num{font-weight:800;font-size:.86rem;width:26px;height:26px;border-radius:50%;display:grid;place-items:center}
+.pill{display:block;font-size:.74rem;font-weight:700;padding:2px 6px;border-radius:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:color-mix(in srgb,var(--c,#999) 18%,var(--card));border-left:3px solid var(--c,#999)}
+.more{font-size:.72rem;font-weight:800;color:var(--muted)}
+.dots{display:none;flex-wrap:wrap;gap:3px}
+@media (max-width:760px){
+  .mcell{min-height:58px;padding:4px;align-items:center}
+  .mcell .pill,.mcell .more{display:none}
+  .dots{display:flex;justify-content:center}
+  .dots .dot{width:7px;height:7px}
+  .month .dow{font-size:.66rem;letter-spacing:0}
+}
+.agenda{margin-top:16px}
+
+/* ============================== MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(30,20,10,.45);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-bg.open{display:flex}
+.modal{background:var(--card);border-radius:20px;max-width:560px;width:100%;max-height:88vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3);border-top:8px solid var(--c,#999)}
+.modal h3{font-size:1.4rem;margin-bottom:8px;overflow-wrap:anywhere}
+.modal .meta{display:grid;gap:8px;margin:12px 0;font-size:.95rem}
+.modal .meta div{display:flex;gap:10px}
+.modal .meta div > span:first-child{flex:0 0 22px}
+.modal .desc{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.92rem;background:color-mix(in srgb,var(--c,#999) 6%,var(--card));padding:12px;border-radius:12px;max-height:40vh;overflow:auto}
+.modal .close{float:right;border:0;background:transparent;font-size:1.6rem;cursor:pointer;line-height:1;color:var(--muted)}
+
+/* ============================== MEALS / GROCERIES */
+details.fold{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);margin-top:18px}
+details.fold > summary{list-style:none;cursor:pointer;padding:18px 20px;font-family:var(--font-head);font-size:1.3rem;font-weight:700;display:flex;align-items:center;gap:10px}
+details.fold > summary::-webkit-details-marker{display:none}
+details.fold > summary::after{content:"▸";margin-left:auto;transition:transform .2s;color:var(--accent)}
+details.fold[open] > summary::after{transform:rotate(90deg)}
+.fold-body{padding:0 20px 20px}
+details.sub{border:1px solid var(--line);border-radius:14px;margin-bottom:18px;background:color-mix(in srgb,var(--accent) 5%,var(--card))}
+details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size:1.05rem}
+.embed{width:100%;border:0;border-radius:12px;background:#fff;display:block}
+.embed.form{height:760px}
+.embed.sheet{height:clamp(420px,70vh,900px)}
+.embed.doc{height:clamp(520px,80vh,1400px)}
+.heb{background:#e31837}
+.heb:hover{background:#c9102c}
+
+/* ============================== KIDS */
+.kid-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.kid-hero .avatar{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;font-size:2rem;background:color-mix(in srgb,var(--accent) 16%,var(--card))}
+.bar{height:14px;border-radius:999px;background:var(--line);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:999px}
+.biglink{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;text-decoration:none;color:var(--ink);
+  background:color-mix(in srgb,var(--accent) 7%,var(--card));border:1px solid var(--line);font-weight:700;overflow-wrap:anywhere}
+.biglink:hover{background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+.biglink .em{font-size:1.4rem}
+.links{display:grid;gap:10px}
+
+/* ============================== BULLETIN BOARD */
+.cork{border-radius:24px;padding:clamp(14px,3vw,34px);position:relative;
+  background:
+    radial-gradient(circle at 20% 30%,rgba(255,255,255,.12) 0 2px,transparent 3px) 0 0/18px 18px,
+    radial-gradient(circle at 70% 60%,rgba(0,0,0,.08) 0 1.5px,transparent 2.5px) 0 0/14px 14px,
+    linear-gradient(135deg,#c89566,#b07a4a);
+  border:12px solid #8a5a33;box-shadow:inset 0 0 30px rgba(0,0,0,.25),var(--shadow)}
+.paper{background:#fffef8;border-radius:6px;padding:clamp(10px,2vw,22px);position:relative;transform:rotate(-.4deg);
+  box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.paper::before,.paper::after{content:"";position:absolute;top:-14px;width:110px;height:30px;background:rgba(255,240,170,.75);
+  box-shadow:0 2px 4px rgba(0,0,0,.12)}
+.paper::before{left:8%;transform:rotate(-6deg)}
+.paper::after{right:8%;transform:rotate(5deg)}
+.pin{position:absolute;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff8a8a,#c0202a);box-shadow:2px 3px 4px rgba(0,0,0,.35)}
+.board-title{font-family:var(--font-hand);font-size:clamp(2rem,6vw,3.2rem);color:#fffbea;text-shadow:0 2px 0 rgba(0,0,0,.25);margin:0 0 14px;text-align:center}
+.sticky-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:18px}
+.sticky{font-family:var(--font-hand);font-size:1.3rem;padding:10px 16px;background:#fff59d;box-shadow:0 4px 10px rgba(0,0,0,.2);transform:rotate(var(--r,-2deg));color:#4a3b10}
+
+footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#home" aria-label="Heilman Family Command Center home">
+      <span class="logo" id="logoEmoji">🏡</span>
+      <span><small>The Heilman Family</small><b>Command Center</b></span>
+    </a>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="tabs">☰ <span id="menuLabel">Menu</span></button>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <a href="#home">🏠 Home</a>
+      <a href="#week">📅 Week at a Glance</a>
+      <a href="#calendar">📆 Family Calendar</a>
+      <a href="#meals">🍽️ Meal Plan &amp; Groceries</a>
+      <a href="#graham">📚 Graham</a>
+      <a href="#holden">📚 Holden</a>
+      <a href="#board">📌 Bulletin Board</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================================================== HOME -->
+  <section class="page" id="page-home" data-title="🏠 Home">
+    <div class="hero" id="hero">
+      <div class="deco" id="deco" aria-hidden="true"></div>
+      <div style="position:relative">
+        <div class="kicker" id="heroKicker"></div>
+        <h1 id="heroTitle">Welcome home</h1>
+        <p id="heroSub"></p>
+      </div>
+      <svg class="wave" viewBox="0 0 1200 56" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,30 C200,60 400,0 600,26 C800,52 1000,6 1200,28 L1200,56 L0,56 Z" fill="var(--accent)" opacity=".18"/>
+        <path d="M0,40 C240,18 420,58 640,38 C860,18 1000,54 1200,36 L1200,56 L0,56 Z" fill="var(--accent2)" opacity=".22"/>
+      </svg>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>🎉 <span id="holidayName">Next holiday</span></h2>
+        <div id="holidayWhen" class="muted small"></div>
+        <div class="count" id="countdown" aria-live="off"></div>
+      </div>
+      <div class="card">
+        <h2>🌤️ Today's weather <span class="tag" style="--c:var(--accent2)" id="weatherLoc"></span></h2>
+        <div id="weather"><span class="spinner"></span></div>
+      </div>
+      <div class="card">
+        <h2>📍 Today's schedule <span class="sync" id="syncHome"></span></h2>
+        <div id="todayList"><span class="spinner"></span></div>
+      </div>
+      <div class="card span-2">
+        <h2>🗓️ Coming up this week</h2>
+        <p class="summary-line" id="weekSummary"></p>
+        <div id="weekUpcoming"><span class="spinner"></span></div>
+      </div>
+      <div class="card">
+        <h2>✨ Something to look forward to</h2>
+        <div id="lookForward"><span class="spinner"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== WEEK -->
+  <section class="page" id="page-week" data-title="📅 Week at a Glance">
+    <div class="page-head">
+      <div><h1>Week at a Glance</h1><p id="weekRange"></p></div>
+      <div class="row">
+        <button class="btn ghost sm" id="weekPrev" aria-label="Previous week">← Prev</button>
+        <button class="btn ghost sm" id="weekToday">This week</button>
+        <button class="btn ghost sm" id="weekNext" aria-label="Next week">Next →</button>
+        <span class="sync" id="syncWeek"></span>
+      </div>
+    </div>
+    <div class="legend" id="weekLegend"></div>
+    <div id="weekGrid"><span class="spinner"></span></div>
+  </section>
+
+  <!-- ===================================================== CALENDAR -->
+  <section class="page" id="page-calendar" data-title="📆 Family Calendar">
+    <div class="page-head">
+      <div><h1>Family Calendar</h1><p>Everything from the Google Family Calendar and its subscribed calendars.</p></div>
+      <span class="sync" id="syncCal"></span>
+    </div>
+    <div class="card">
+      <div class="cal-toolbar">
+        <h2 id="monthTitle">Month</h2>
+        <span class="navgrp"><button class="btn ghost sm" id="monPrev" aria-label="Previous month">←</button>
+        <button class="btn ghost sm" id="monToday">Today</button>
+        <button class="btn ghost sm" id="monNext" aria-label="Next month">→</button></span>
+      </div>
+      <div class="filters" id="filters"></div>
+      <div id="calBody"><span class="spinner"></span></div>
+      <div class="agenda" id="agenda"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== MEALS -->
+  <section class="page" id="page-meals" data-title="🍽️ Meal Plan & Groceries">
+    <div class="page-head">
+      <div><h1>Meal Plan &amp; Groceries</h1><p>What's cooking this week, and what we need from the store.</p></div>
+    </div>
+    <div class="card">
+      <h2>🍲 This week's meals <span class="sync" id="syncMeals"></span></h2>
+      <div id="meals"><span class="spinner"></span></div>
+    </div>
+
+    <details class="fold" id="groceries">
+      <summary>🛒 Groceries</summary>
+      <div class="fold-body">
+        <details class="sub">
+          <summary>➕ Add Grocery Item</summary>
+          <div style="padding:0 12px 12px" id="formSlot"></div>
+        </details>
+        <h2 style="font-size:1.25rem;margin:4px 0 12px">Current Grocery List</h2>
+        <div id="sheetSlot"></div>
+        <div class="row" style="margin-top:16px">
+          <a class="btn heb" id="hebBtn" target="_blank" rel="noopener">🛒 Open HEB Shopping List</a>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- ===================================================== KIDS -->
+  <section class="page" id="page-graham" data-title="📚 Graham"></section>
+  <section class="page" id="page-holden" data-title="📚 Holden"></section>
+
+  <!-- ===================================================== BULLETIN BOARD -->
+  <section class="page" id="page-board" data-title="📌 Bulletin Board">
+    <div class="cork">
+      <span class="pin" style="top:10px;left:14px"></span>
+      <span class="pin" style="top:10px;right:14px;background:radial-gradient(circle at 35% 35%,#8ac4ff,#1f5fae)"></span>
+      <h1 class="board-title">The Heilman Fridge 🧲</h1>
+      <div class="sticky-row" aria-hidden="true">
+        <span class="sticky" style="--r:-3deg">Quick notes ✏️</span>
+        <span class="sticky" style="--r:2deg;background:#c8f7c5">Celebrate! 🎉</span>
+        <span class="sticky" style="--r:-1deg;background:#ffd6e7">You've got this 💪</span>
+        <span class="sticky" style="--r:3deg;background:#cfe8ff">Trip ideas 🏖️</span>
+      </div>
+      <div class="paper" id="boardSlot"></div>
+      <p class="small" style="color:#fffbea;text-align:center;margin:16px 0 0">Write over old notes freely. No archive needed.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap" id="footerNote">Made with love for the Heilman family 💛</div>
+</footer>
+
+<div class="modal-bg" id="modalBg" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+/* =====================================================================
+   CONFIGURATION — the only part of this file that ever needs editing.
+   ===================================================================== */
+const CONFIG = {
+  location: { name: "Cedar Park, TX", lat: 30.5052, lon: -97.8203 },
+  timeZone: "America/Chicago",
+
+  /* Hosted site only: Google OAuth Client ID (Web application) that lets
+     family members sign in and see the calendar. See SETUP.md. */
+  googleClientId: "",
+
+  /* Friendly names + filter categories for the calendars already on the
+     Google account. Calendars not listed here still appear, named by
+     their own Google title, so new subscriptions show up automatically. */
+  calendars: {
+    "family08473414461836549106@group.calendar.google.com": { label: "Family", category: "Family Events" },
+    "en.usa#holiday@group.v.calendar.google.com":          { label: "US Holidays", category: "Holidays" },
+    "nvm1mgdbh0d8t6dkv8e0udu3okh2bhd9@import.calendar.google.com": { label: "Scout Troop", category: "Scouts" },
+    "u8iu9eblt3vcrh66b3qs9rs636cbi310@import.calendar.google.com": { label: "Twisters", category: "Sports" },
+    "f9ar4fr5qsknnlc0evetmqd798lrbf5d@import.calendar.google.com": { label: "K-State Football", category: "Sports" },
+    "leanderisd.org_00jknjkfj64fr8ikjnfdq2q0b4@group.calendar.google.com": { label: "LISD Middle School", category: "School" },
+    "leanderisd.org_250983jvv44tcs4o6q986rdcbk@group.calendar.google.com": { label: "LISD High School", category: "School" },
+    "dtn4m5pgtncgrevedb4n4ce95i064j0q@import.calendar.google.com": { label: "Cedar Park MS", category: "School" },
+    "u35k927b4ics7n9bi5matv2qjjj18lbl@import.calendar.google.com": { label: "Cedar Park HS", category: "School" }
+  },
+
+  links: {
+    groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
+    grocerySheet: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQuCWdZAw68SI5d9H2azIcwlTmk9Kf9AdvvzjaoU3AAux3qyn0zxX-2RuxNd3ya4wmmmUuWSFpJTG-y/pubhtml?gid=557803561&single=true&widget=true&headers=false",
+    heb:          "https://www.heb.com/shopping-list/shared/4e0a2fb4-dc7e-4650-91fa-0ac1a6d6ab6a",
+    bulletinDoc:  "https://docs.google.com/document/d/e/2PACX-1vR1bRS2j1jGltso0yLmdxyshbY3alG0F6xb07FdUJiGD2QMbn6K4_AvdcEDz8kc22iExtkOXPifg8ws/pub?embedded=true",
+    bulletinEdit: ""   // optional: the Doc's normal "edit" link, to show an ✏️ Edit button
+  },
+
+  /* Leander ISD 2026-27 secondary six-week grading periods
+     (from the district's approved 2026-27 high school calendar). */
+  gradingPeriods: [
+    { name: "1st Six Weeks", start: "2026-08-12", end: "2026-09-18" },
+    { name: "2nd Six Weeks", start: "2026-09-22", end: "2026-10-30" },
+    { name: "3rd Six Weeks", start: "2026-11-04", end: "2026-12-18" },
+    { name: "4th Six Weeks", start: "2027-01-05", end: "2027-02-19" },
+    { name: "5th Six Weeks", start: "2027-02-22", end: "2027-04-16" },
+    { name: "6th Six Weeks", start: "2027-04-19", end: "2027-05-27" }
+  ],
+  /* LISD 2026-27 student holidays / staff days (used to count school days left). */
+  noSchool: [
+    "2026-09-07","2026-09-21","2026-10-09","2026-10-12","2026-10-13","2026-11-02","2026-11-03",
+    "2026-11-23..2026-11-27","2026-12-21..2027-01-01","2027-01-04","2027-01-18","2027-02-12",
+    "2027-02-15","2027-02-16","2027-03-15..2027-03-19","2027-03-26","2027-03-29","2027-04-26"
+  ],
+
+  schoolResources: [
+    { emoji: "🚀", label: "LISD Launchpad (ClassLink)", url: "https://launchpad.classlink.com/leander" },
+    { emoji: "🎓", label: "Google Classroom",           url: "https://classroom.google.com" },
+    { emoji: "🏫", label: "Leander ISD",                url: "https://www.leanderisd.org" },
+    { emoji: "🗓️", label: "LISD Academic Calendar",     url: "https://www.leanderisd.org/calendar" }
+  ],
+  kids: {
+    graham: { name: "Graham", emoji: "🦉", classroomLinks: [ /* { label: "Algebra I", url: "https://classroom.google.com/c/..." } */ ] },
+    holden: { name: "Holden", emoji: "🦊", classroomLinks: [ /* { label: "English", url: "https://classroom.google.com/c/..." } */ ] }
+  }
+};
+
+/* =====================================================================
+   SMALL HELPERS
+   ===================================================================== */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const localISO = d => `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+const parseYMD = s => { const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const sameDay = (a, b) => ymd(a) === ymd(b);
+const startOfWeek = d => addDays(startOfDay(d), -d.getDay());
+const fmt = (d, o) => new Intl.DateTimeFormat("en-US", o).format(d);
+const fmtTime = d => fmt(d, { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", " ");
+const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / 864e5);
+const store = {
+  get(k, f) { try { const v = localStorage.getItem("hfcc:" + k); return v == null ? f : JSON.parse(v); } catch { return f; } },
+  set(k, v) { try { localStorage.setItem("hfcc:" + k, JSON.stringify(v)); } catch {} }
+};
+
+/* =====================================================================
+   SEASONAL THEME
+   ===================================================================== */
+function easter(y) {
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+        h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return new Date(y, mo-1, da);
+}
+function nthWeekday(y, m, wd, n) { const first = new Date(y, m, 1); return new Date(y, m, 1 + ((wd - first.getDay() + 7) % 7) + (n-1)*7); }
+function lastWeekday(y, m, wd) { const last = new Date(y, m+1, 0); return new Date(y, m, last.getDate() - ((last.getDay() - wd + 7) % 7)); }
+
+const THEMES = {
+  newyear:     { kicker:"Happy New Year", title:"Fresh start, family!", emoji:["🎆","✨","🥂","🎉","⭐","🎊"], logo:"🎆",
+                 c:{bg1:"#f4f2ff",bg2:"#e3e0f7",accent:"#3b3fa0",accent2:"#d4a017",ink:"#1f1d3a",muted:"#6a6890",card:"#fdfcff",line:"#e2def5"} },
+  winter:      { kicker:"Cozy winter days", title:"Stay warm, Heilmans", emoji:["❄️","☕","🧣","❄️","⛄","🧤"], logo:"❄️",
+                 c:{bg1:"#f1f7fc",bg2:"#dceaf5",accent:"#2f6f9f",accent2:"#8fb8d8",ink:"#1d2d3a",muted:"#62798b",card:"#fbfdff",line:"#dbe7f0"} },
+  valentine:   { kicker:"Valentine's week", title:"Lots of love in this house", emoji:["💗","💌","🌹","💕","🍫","💘"], logo:"💗",
+                 c:{bg1:"#fff3f6",bg2:"#fbdde6",accent:"#c2185b",accent2:"#f48fb1",ink:"#3d1a26",muted:"#8a5d6c",card:"#fffafb",line:"#f5d9e2"} },
+  stpatrick:   { kicker:"St. Patrick's week", title:"Feeling lucky, family!", emoji:["☘️","🍀","🌈","💰","☘️","🍀"], logo:"🍀",
+                 c:{bg1:"#f2fbf2",bg2:"#d8f0d8",accent:"#2e7d32",accent2:"#c9a227",ink:"#1b3320",muted:"#5f7d63",card:"#fbfffb",line:"#d6ead7"} },
+  easter:      { kicker:"Easter season", title:"Spring has sprung!", emoji:["🐣","🌷","🥚","🐰","🌸","🦋"], logo:"🐣",
+                 c:{bg1:"#fbf8ff",bg2:"#ece5fb",accent:"#8e5bd0",accent2:"#f2b8d4",ink:"#2f2440",muted:"#7c6e92",card:"#fefcff",line:"#e9e1f6"} },
+  spring:      { kicker:"Springtime", title:"Bluebonnets & busy days", emoji:["🌼","🌷","🦋","🐝","🌸","🌱"], logo:"🌷",
+                 c:{bg1:"#f5fbf3",bg2:"#e3f2dc",accent:"#4a7fc1",accent2:"#7cb342",ink:"#22301c",muted:"#667a5e",card:"#fcfffb",line:"#dfecd8"} },
+  summer:      { kicker:"Summer days", title:"Sunshine & good times", emoji:["☀️","🌊","🍉","🕶️","🏊","🌴"], logo:"☀️",
+                 c:{bg1:"#fffbea",bg2:"#ffeeb8",accent:"#e07a10",accent2:"#1fa2c4",ink:"#3a2a08",muted:"#86704a",card:"#fffef6",line:"#f6e6b5"} },
+  july4:       { kicker:"Independence Day", title:"Stars, stripes & sparklers", emoji:["🎆","🇺🇸","⭐","🎇","🌭","🎆"], logo:"🎆",
+                 c:{bg1:"#f5f8ff",bg2:"#e3eafb",accent:"#b22234",accent2:"#3c3b6e",ink:"#1d1f3a",muted:"#64688e",card:"#fdfeff",line:"#dde3f5"} },
+  backtoschool:{ kicker:"Back to school", title:"A great year starts now", emoji:["🎒","✏️","📚","🍎","📐","🚌"], logo:"🎒",
+                 c:{bg1:"#fffaf0",bg2:"#fbe9c8",accent:"#d0472b",accent2:"#f2b134",ink:"#38260f",muted:"#85704e",card:"#fffdf7",line:"#f1e2c3"} },
+  fall:        { kicker:"Hello, fall", title:"Football Fridays & cooler nights", emoji:["🍂","🍁","🏈","🌻","🍎","🍂"], logo:"🍁",
+                 c:{bg1:"#fff7ee",bg2:"#fbe2c8",accent:"#c25a1b",accent2:"#8a9a3b",ink:"#3a2614",muted:"#86684f",card:"#fffcf8",line:"#f1dfcb"} },
+  halloween:   { kicker:"Spooky season", title:"Boo! It's almost Halloween", emoji:["🎃","👻","🦇","🍬","🕸️","🌙"], logo:"🎃",
+                 c:{bg1:"#fff5ea",bg2:"#ffdcb8",accent:"#e86a10",accent2:"#6b3fa0",ink:"#2c1c10",muted:"#7f6450",card:"#fffaf4",line:"#f3d9bd"} },
+  thanksgiving:{ kicker:"Season of thanks", title:"Grateful for this crew", emoji:["🦃","🍂","🥧","🌽","🍁","🧡"], logo:"🦃",
+                 c:{bg1:"#fff6ec",bg2:"#f8dfc4",accent:"#b5541c",accent2:"#c9932e",ink:"#3b2414",muted:"#86664e",card:"#fffbf6",line:"#efdcc6"} },
+  christmas:   { kicker:"Holiday season", title:"Merry & bright, Heilmans", emoji:["🎄","❄️","🎁","⭐","🦌","🍪"], logo:"🎄",
+                 c:{bg1:"#f6fbf7",bg2:"#e2efe5",accent:"#b3262f",accent2:"#1e7a46",ink:"#1f2a22",muted:"#617166",card:"#fcfffd",line:"#dbe9df"} }
+};
+function themeFor(d) {
+  const y = d.getFullYear(), m = d.getMonth() + 1, day = d.getDate();
+  const md = m * 100 + day;
+  const ea = easter(y), tg = nthWeekday(y, 10, 4, 4);
+  if (d >= addDays(ea, -7) && d <= addDays(ea, 1)) return "easter";
+  if (md >= 101 && md <= 106) return "newyear";
+  if (md >= 207 && md <= 214) return "valentine";
+  if (m <= 2) return "winter";
+  if (md >= 310 && md <= 317) return "stpatrick";
+  if (m <= 5) return "spring";
+  if (md >= 628 && md <= 705) return "july4";
+  if (md >= 801 && md <= 820) return "backtoschool";
+  if (m <= 8) return "summer";
+  if (md >= 1015 && md <= 1031) return "halloween";
+  if (m === 11 && d <= addDays(tg, 1)) return "thanksgiving";
+  if (m >= 11) return "christmas";
+  return "fall";
+}
+function applyTheme() {
+  const now = new Date();
+  let key = themeFor(now);
+  try { const q = new URLSearchParams(location.search).get("theme"); if (q && THEMES[q]) key = q; } catch {}
+  const t = THEMES[key], r = document.documentElement.style;
+  r.setProperty("--bg1", t.c.bg1); r.setProperty("--bg2", t.c.bg2); r.setProperty("--accent", t.c.accent);
+  r.setProperty("--accent2", t.c.accent2); r.setProperty("--ink", t.c.ink); r.setProperty("--hero-ink", t.c.ink);
+  r.setProperty("--muted", t.c.muted); r.setProperty("--card", t.c.card); r.setProperty("--line", t.c.line);
+  $("#logoEmoji").textContent = t.logo;
+  const hour = now.getHours();
+  const greet = hour < 5 ? "Good night" : hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  $("#heroKicker").textContent = `${t.kicker} · ${fmt(now, { weekday: "long", month: "long", day: "numeric" })}`;
+  $("#heroTitle").textContent = t.title;
+  $("#heroSub").textContent = `${greet}! Here's what's happening today and what's ahead this week.`;
+  const spots = [[8,62],[14,80],[34,92],[60,70],[72,90],[6,94],[48,82],[30,72]];
+  $("#deco").innerHTML = spots.map(([top, left], i) =>
+    `<span style="top:${top}%;left:${left}%;--s:${22 + (i*7)%22}px;--d:${7 + i%4*2}s">${t.emoji[i % t.emoji.length]}</span>`).join("");
+}
+
+/* =====================================================================
+   HOLIDAY COUNTDOWN (dates computed from calendar rules)
+   ===================================================================== */
+function holidaysFor(y) {
+  return [
+    { n: "New Year's Day", e: "🎆", d: new Date(y, 0, 1) },
+    { n: "Valentine's Day", e: "💗", d: new Date(y, 1, 14) },
+    { n: "St. Patrick's Day", e: "🍀", d: new Date(y, 2, 17) },
+    { n: "Easter", e: "🐣", d: easter(y) },
+    { n: "Mother's Day", e: "💐", d: nthWeekday(y, 4, 0, 2) },
+    { n: "Memorial Day", e: "🇺🇸", d: lastWeekday(y, 4, 1) },
+    { n: "Father's Day", e: "👔", d: nthWeekday(y, 5, 0, 3) },
+    { n: "Independence Day", e: "🎆", d: new Date(y, 6, 4) },
+    { n: "Labor Day", e: "🛠️", d: nthWeekday(y, 8, 1, 1) },
+    { n: "Halloween", e: "🎃", d: new Date(y, 9, 31) },
+    { n: "Thanksgiving", e: "🦃", d: nthWeekday(y, 10, 4, 4) },
+    { n: "Christmas", e: "🎄", d: new Date(y, 11, 25) }
+  ];
+}
+function nextHoliday(now) {
+  const today = startOfDay(now);
+  const all = [...holidaysFor(now.getFullYear()), ...holidaysFor(now.getFullYear() + 1)];
+  return all.find(h => h.d >= today);
+}
+function tickCountdown() {
+  const now = new Date(), h = nextHoliday(now);
+  $("#holidayName").textContent = `${h.e} ${h.n}`;
+  if (sameDay(h.d, now)) {
+    $("#holidayWhen").textContent = "It's today!";
+    $("#countdown").innerHTML = `<div style="grid-column:1/-1"><b>Happy ${esc(h.n)}! ${h.e}</b></div>`;
+    return;
+  }
+  let ms = h.d - now;
+  const D = Math.floor(ms / 864e5); ms -= D * 864e5;
+  const H = Math.floor(ms / 36e5); ms -= H * 36e5;
+  const M = Math.floor(ms / 6e4); const S = Math.floor((ms - M * 6e4) / 1000);
+  $("#holidayWhen").textContent = fmt(h.d, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  $("#countdown").innerHTML = [[D,"days"],[H,"hours"],[M,"min"],[S,"sec"]].map(([v,l]) => `<div><b>${v}</b><small>${l}</small></div>`).join("");
+}
+
+/* =====================================================================
+   WEATHER (Open-Meteo, free, no key) — works on the hosted site
+   ===================================================================== */
+const WMO = c => c === 0 ? ["☀️","Clear"] : c <= 1 ? ["🌤️","Mostly clear"] : c === 2 ? ["⛅","Partly cloudy"] : c === 3 ? ["☁️","Cloudy"] :
+  c <= 48 ? ["🌫️","Foggy"] : c <= 57 ? ["🌦️","Drizzle"] : c <= 67 ? ["🌧️","Rain"] : c <= 77 ? ["❄️","Snow"] :
+  c <= 82 ? ["🌦️","Showers"] : c <= 86 ? ["🌨️","Snow showers"] : ["⛈️","Thunderstorms"];
+async function loadWeather() {
+  $("#weatherLoc").textContent = CONFIG.location.name;
+  const L = CONFIG.location;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${L.lat}&longitude=${L.lon}` +
+    `&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+    `&temperature_unit=fahrenheit&timezone=${encodeURIComponent(CONFIG.timeZone)}&forecast_days=1`;
+  try {
+    const r = await fetch(url); if (!r.ok) throw new Error(r.status);
+    const w = await r.json();
+    const [icon, label] = WMO(w.current.weather_code);
+    $("#weather").innerHTML = `<div class="weather"><span class="big">${icon}</span>
+      <div><div class="temp">${Math.round(w.current.temperature_2m)}°</div><div class="muted small">Feels like ${Math.round(w.current.apparent_temperature)}°</div></div>
+      <div><b>${label}</b><div class="small">High ${Math.round(w.daily.temperature_2m_max[0])}° · Low ${Math.round(w.daily.temperature_2m_min[0])}°</div>
+      <div class="small">☔ ${w.daily.precipitation_probability_max[0] ?? 0}% chance of rain</div></div></div>`;
+  } catch {
+    $("#weather").innerHTML = MODE === "claude"
+      ? `<p class="empty">Live weather appears on the hosted family site. This preview can't reach the weather service.</p>`
+      : `<p class="empty">Weather is unavailable right now. It will try again shortly.</p>`;
+    setTimeout(loadWeather, 15 * 60e3);
+  }
+}
+
+/* =====================================================================
+   CALENDAR DATA LAYER
+   MODE "claude": running as a Claude artifact → reads Google Calendar
+                  through the viewer's Google Calendar connector.
+   MODE "google": running on the hosted site → reads Google Calendar API
+                  after the family member signs in with Google.
+   No fake/sample events are ever generated.
+   ===================================================================== */
+const MODE = (typeof window.claude === "object" && window.claude && typeof window.claude.use === "function") ? "claude" : "google";
+const CAT_COLORS = { "Family Events":"#e0584c", "Personal Events":"#7a63d1", "Holidays":"#d49b00", "Scouts":"#2f8a52",
+                     "Sports":"#1f74c4", "School":"#e0782f", "Other":"#8a8a8a" };
+const CAT_EMOJI  = { "Family Events":"🏡", "Personal Events":"👤", "Holidays":"🎉", "Scouts":"⚜️", "Sports":"🏅", "School":"🏫", "Other":"📌" };
+
+const state = {
+  status: "loading",          // loading | ready | needs-setup | needs-signin | error
+  statusMsg: "",
+  calendars: [],              // [{id,label,category,color}]
+  months: new Map(),          // "YYYY-MM" -> Promise<events[]>
+  hidden: new Set(store.get("hidden", [])),
+  lastSync: null,
+  failed: []
+};
+
+function describeCalendar(id, summary, primary) {
+  const c = CONFIG.calendars[id];
+  if (c) return { id, label: c.label, category: c.category };
+  let label = summary || id;
+  if (/^(webcal|https?):\/\//i.test(label)) { try { label = new URL(label.replace(/^webcal/i, "https")).hostname.replace(/^www\./, ""); } catch {} }
+  const s = (summary || "").toLowerCase();
+  const category = /holiday/.test(s) ? "Holidays" : /school|isd|\bhs\b|\bms\b|elementary|middle|high/.test(s) ? "School" :
+    /troop|scout|cub|pack\b/.test(s) ? "Scouts" : /football|soccer|baseball|softball|basketball|volleyball|swim|sports|team/.test(s) ? "Sports" :
+    /family/.test(s) ? "Family Events" : primary ? "Personal Events" : "Other";
+  return { id, label, category };
+}
+
+/* ---------- connector (Claude artifact) ---------- */
+let mcp = null;
+const SERVER = "Google Calendar";
+function mcpErrorText(e) {
+  switch (e && e.code) {
+    case "needs_reauth": return "Google Calendar needs to be reconnected: claude.ai → Settings → Connectors.";
+    case "server_not_connected": return "Add the Google Calendar connector in claude.ai → Settings → Connectors.";
+    case "selection_required": return "Choose which Google Calendar connector this page should use when Claude asks.";
+    case "approval_required": case "not_in_manifest": case "consent_required":
+      return "This page needs your OK to read Google Calendar.";
+    case "blocked_by_policy": return "Your organization's policy blocks Google Calendar here.";
+    default: return (e && e.message) ? `Google Calendar couldn't be reached (${e.message}).` : "Google Calendar couldn't be reached.";
+  }
+}
+async function mcpCall(tool, input) {
+  const res = await mcp.callTool(SERVER, tool, input, { cache: { staleTime: 5 * 60e3, gcTime: 60 * 60e3 } });
+  let p = res.payload;
+  if (typeof p === "string") { try { p = JSON.parse(p); } catch {} }
+  return p || {};
+}
+async function mcpEvents(calId, start, end) {
+  const out = []; let token;
+  for (let i = 0; i < 6; i++) {
+    const input = { calendarId: calId, startTime: localISO(start), endTime: localISO(end), orderBy: "startTime", pageSize: 250 };
+    if (token) input.pageToken = token;
+    const p = await mcpCall("list_events", input);
+    out.push(...(p.events || []));
+    token = p.nextPageToken; if (!token) break;
+  }
+  return out;
+}
+
+/* ---------- Google sign-in (hosted site) ---------- */
+let gToken = store.get("gtoken", null);
+let tokenClient = null;
+const tokenValid = () => gToken && gToken.exp > Date.now() + 60e3;
+function loadGis() {
+  return new Promise((res, rej) => {
+    if (window.google && google.accounts) return res();
+    const s = document.createElement("script"); s.src = "https://accounts.google.com/gsi/client"; s.async = true;
+    s.onload = res; s.onerror = () => rej(new Error("Google sign-in script failed to load")); document.head.appendChild(s);
+  });
+}
+async function signIn() {
+  await loadGis();
+  if (!tokenClient) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CONFIG.googleClientId,
+      scope: "https://www.googleapis.com/auth/calendar.readonly",
+      callback: r => {
+        if (r.error) { setStatus("needs-signin", "Google sign-in didn't finish. Try again."); return; }
+        gToken = { t: r.access_token, exp: Date.now() + (r.expires_in || 3600) * 1000 };
+        store.set("gtoken", gToken); store.set("signedIn", true);
+        boot();
+      }
+    });
+  }
+  tokenClient.requestAccessToken({ prompt: store.get("signedIn", false) ? "" : "consent" });
+}
+async function gapi(path, params = {}) {
+  const u = new URL("https://www.googleapis.com/calendar/v3/" + path);
+  Object.entries(params).forEach(([k, v]) => v != null && u.searchParams.set(k, v));
+  const r = await fetch(u, { headers: { Authorization: "Bearer " + gToken.t } });
+  if (r.status === 401) { gToken = null; store.set("gtoken", null); throw Object.assign(new Error("Sign-in expired"), { auth: true }); }
+  if (!r.ok) throw new Error("Google Calendar error " + r.status);
+  return r.json();
+}
+async function googleEvents(calId, start, end) {
+  const out = []; let token;
+  for (let i = 0; i < 6; i++) {
+    const p = await gapi(`calendars/${encodeURIComponent(calId)}/events`, {
+      timeMin: start.toISOString(), timeMax: end.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: 2500, pageToken: token });
+    out.push(...(p.items || [])); token = p.nextPageToken; if (!token) break;
+  }
+  return out;
+}
+
+/* ---------- shared ---------- */
+function cleanDesc(s) {
+  if (!s) return "";
+  s = s.split(/X-ALT-DESC/i)[0];
+  if (/<[a-z][\s\S]*>/i.test(s)) {
+    s = s.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n");
+    s = new DOMParser().parseFromString(s, "text/html").body.textContent || "";
+  }
+  return s.replace(/\n{3,}/g, "\n\n").trim();
+}
+function normalize(raw, cal) {
+  if (!raw || raw.status === "cancelled" || !raw.start) return null;
+  const allDay = !!raw.start.date;
+  const start = allDay ? parseYMD(raw.start.date) : new Date(raw.start.dateTime);
+  let end = raw.end ? (raw.end.date ? parseYMD(raw.end.date) : new Date(raw.end.dateTime)) : null;
+  if (!end || end <= start) end = allDay ? addDays(start, 1) : new Date(start.getTime() + 1);
+  return { key: cal.id + "|" + raw.id, id: raw.id, cal, title: raw.summary || "(No title)", start, end, allDay,
+           location: raw.location || "", description: cleanDesc(raw.description), link: raw.htmlLink || "" };
+}
+function setStatus(s, msg = "") { state.status = s; state.statusMsg = msg; renderAll(); }
+
+async function loadCalendars() {
+  if (MODE === "claude") {
+    const p = await mcpCall("list_calendars", {});
+    return (p.calendars || p.items || []).map(c => describeCalendar(c.id, c.summary, c.primary));
+  }
+  const p = await gapi("users/me/calendarList", { minAccessRole: "reader", maxResults: 250 });
+  return (p.items || []).filter(c => !c.hidden).map(c => describeCalendar(c.id, c.summaryOverride || c.summary, c.primary));
+}
+
+function monthKey(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
+function loadMonth(key) {
+  if (state.months.has(key)) return state.months.get(key);
+  const [y, m] = key.split("-").map(Number);
+  const start = new Date(y, m - 1, 1), end = new Date(y, m, 1);
+  const p = (async () => {
+    const results = await Promise.allSettled(state.calendars.map(c =>
+      (MODE === "claude" ? mcpEvents(c.id, start, end) : googleEvents(c.id, start, end)).then(list => ({ c, list }))));
+    const evs = [], failed = [];
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") r.value.list.forEach(raw => { const e = normalize(raw, r.value.c); if (e) evs.push(e); });
+      else { failed.push(state.calendars[i].label); if (r.reason && r.reason.auth) throw r.reason; }
+    });
+    if (failed.length === state.calendars.length && failed.length) {
+      const err = results.find(r => r.status === "rejected").reason; throw err;
+    }
+    state.failed = failed;
+    state.lastSync = new Date();
+    return evs;
+  })();
+  p.catch(() => state.months.delete(key));
+  state.months.set(key, p);
+  return p;
+}
+async function eventsBetween(start, end, { includeHidden = false } = {}) {
+  const keys = new Set(); for (let d = new Date(start.getFullYear(), start.getMonth(), 1); d < end; d = new Date(d.getFullYear(), d.getMonth() + 1, 1)) keys.add(monthKey(d));
+  const lists = await Promise.all([...keys].map(loadMonth));
+  const seen = new Set(), out = [];
+  lists.flat().forEach(e => {
+    const k = e.key + "|" + e.start.getTime();
+    if (seen.has(k)) return; seen.add(k);
+    if (e.start < end && e.end > start && (includeHidden || !state.hidden.has(e.cal.id))) out.push(e);
+  });
+  return out.sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start) || a.title.localeCompare(b.title));
+}
+const onDay = (evs, day) => { const s = startOfDay(day), e = addDays(s, 1); return evs.filter(v => v.start < e && v.end > s); };
+const colorOf = e => CAT_COLORS[e.cal.category] || CAT_COLORS.Other;
+
+/* =====================================================================
+   BOOT
+   ===================================================================== */
+let booted = false;
+async function boot() {
+  state.months.clear();
+  try {
+    if (MODE === "claude") {
+      if (!mcp) {
+        setStatus("loading", "Connecting to Google Calendar…");
+        mcp = await window.claude.use("mcp");
+      }
+      if (!mcp) return setStatus("error", "This view can't use the Google Calendar connector. Open the page on claude.ai while signed in.");
+    } else {
+      if (!CONFIG.googleClientId) return setStatus("needs-setup");
+      if (!tokenValid()) return setStatus("needs-signin");
+    }
+    setStatus("loading", "Loading calendars…");
+    state.calendars = await loadCalendars();
+    if (!state.calendars.length) return setStatus("error", "No calendars were found on this Google account.");
+    state.status = "ready"; renderAll();
+  } catch (e) {
+    if (e && e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar.");
+    setStatus("error", MODE === "claude" ? mcpErrorText(e) : (e.message || "Couldn't load Google Calendar."));
+  }
+}
+function refresh() { if (state.status === "ready") { state.months.clear(); renderAll(); } }
+setInterval(refresh, 10 * 60e3);
+
+/* =====================================================================
+   RENDERING
+   ===================================================================== */
+function evButton(e, { showDate = false, day = null } = {}) {
+  let when;
+  if (e.allDay) when = "All day";
+  else if (day && !sameDay(e.start, day)) when = sameDay(addDays(e.end, 0), day) ? `until ${fmtTime(e.end)}` : "All day";
+  else when = fmtTime(e.start);
+  if (showDate) when = fmt(e.start, { weekday: "short" }) + " " + when;
+  const sub = [e.cal.label, e.location && e.location.split(",")[0]].filter(Boolean).join(" · ");
+  return `<button class="ev" style="--c:${colorOf(e)}" data-ev="${esc(e.key)}|${e.start.getTime()}">
+    <span class="when">${esc(when)}</span><span class="what"><b>${esc(e.title)}</b><span>${esc(sub)}</span></span></button>`;
+}
+const evIndex = new Map();
+function remember(evs) { evs.forEach(e => evIndex.set(e.key + "|" + e.start.getTime(), e)); return evs; }
+
+function statusBlock() {
+  if (state.status === "loading") return `<p class="muted"><span class="spinner"></span> ${esc(state.statusMsg || "Loading calendar…")}</p>`;
+  if (state.status === "needs-setup") return `<div class="notice"><b>Calendar connection not set up yet</b>
+    The calendar on this site reads straight from the Google Family Calendar, and it needs a one-time Google sign-in setup (see SETUP.md). No sample events are shown in the meantime.</div>`;
+  if (state.status === "needs-signin") return `<div class="notice"><b>Sign in to see the family calendar</b>
+    ${esc(state.statusMsg || "Sign in with a Google account that can see the Family calendar.")}
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="signin">🔐 Sign in with Google</button></div></div>`;
+  if (state.status === "error") return `<div class="notice warn"><b>The family calendar can't be shown right now</b>${esc(state.statusMsg)}
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="retry">↻ Try again</button></div></div>`;
+  return "";
+}
+function syncLabel() {
+  if (state.status !== "ready" || !state.lastSync) return "";
+  const f = state.failed.length ? ` · ⚠️ ${state.failed.length} source${state.failed.length > 1 ? "s" : ""} didn't load` : "";
+  return `🔄 Updated ${fmtTime(state.lastSync)}${f}`;
+}
+function setSync() { ["#syncHome", "#syncWeek", "#syncCal", "#syncMeals"].forEach(s => { const el = $(s); if (el) el.textContent = syncLabel(); }); }
+
+/* ---------- Home ---------- */
+async function renderHome() {
+  const blk = statusBlock();
+  if (blk) { $("#todayList").innerHTML = blk; $("#weekUpcoming").innerHTML = ""; $("#weekSummary").textContent = ""; $("#lookForward").innerHTML = `<p class="empty">Highlights appear once the calendar is connected.</p>`; return; }
+  const today = startOfDay(new Date()), end = addDays(today, 8);
+  const evs = remember(await eventsBetween(today, end));
+  const now = new Date();
+  const todays = onDay(evs, today).filter(e => e.allDay || e.end > now || sameDay(e.start, now));
+  $("#todayList").innerHTML = todays.length ? `<div class="ev-list">${todays.map(e => evButton(e, { day: today })).join("")}</div>`
+    : `<p class="empty">Nothing on the calendar for the rest of today. Enjoy it! 🌿</p>`;
+
+  const upcoming = evs.filter(e => e.start >= addDays(today, 1));
+  const counts = {}; upcoming.forEach(e => counts[e.cal.category] = (counts[e.cal.category] || 0) + 1);
+  const byDay = [...Array(7)].map((_, i) => addDays(today, i + 1)).map(d => ({ d, list: upcoming.filter(e => sameDay(e.start, d)) }));
+  const busiest = byDay.reduce((a, b) => b.list.length > a.list.length ? b : a, byDay[0]);
+  $("#weekSummary").innerHTML = upcoming.length
+    ? `<b>${upcoming.length} event${upcoming.length > 1 ? "s" : ""}</b> in the next 7 days` + (busiest.list.length > 1 ? ` · busiest day is <b>${fmt(busiest.d, { weekday: "long" })}</b> (${busiest.list.length})` : "") +
+      `<div class="chips" style="margin-top:8px">${Object.entries(counts).map(([c, n]) => `<span class="tag" style="--c:${CAT_COLORS[c]}">${CAT_EMOJI[c] || ""} ${n} ${esc(c)}</span>`).join("")}</div>`
+    : "The next 7 days are wide open.";
+  $("#weekUpcoming").innerHTML = byDay.filter(x => x.list.length).map(x =>
+    `<div class="daygroup"><h3>${fmt(x.d, { weekday: "long", month: "short", day: "numeric" })}</h3><div class="ev-list">${x.list.map(e => evButton(e)).join("")}</div></div>`).join("")
+    || `<p class="empty">No events on the calendar for the coming week.</p>`;
+
+  // Highlights: holidays, family events, sports, multi-day / all-day events, and school breaks
+  const hl = upcoming.filter(e => !/^no meeting|cancel/i.test(e.title) &&
+      (["Holidays", "Family Events", "Sports"].includes(e.cal.category) || e.allDay || (e.end - e.start) >= 6 * 36e5))
+    .filter((e, i, a) => a.findIndex(x => x.title === e.title) === i).slice(0, 5);
+  $("#lookForward").innerHTML = hl.length ? `<div class="ev-list">${hl.map(e => {
+      const days = dayDiff(today, e.start);
+      return `<button class="highlight" style="--c:${colorOf(e)}" data-ev="${esc(e.key)}|${e.start.getTime()}"><span class="em">${CAT_EMOJI[e.cal.category] || "⭐"}</span>
+        <span><b>${esc(e.title)}</b><span class="small muted">${days === 1 ? "Tomorrow" : "In " + days + " days"} · ${fmt(e.start, { weekday: "long" })}</span></span></button>`;
+    }).join("")}</div>` : `<p class="empty">No special events on the calendar this week. A good week to plan something fun!</p>`;
+}
+
+/* ---------- Week ---------- */
+let weekStart = startOfWeek(new Date());
+function legendHtml() {
+  const cats = [...new Set(state.calendars.map(c => c.category))];
+  return cats.map(c => `<span class="tag" style="--c:${CAT_COLORS[c] || CAT_COLORS.Other}">${CAT_EMOJI[c] || ""} ${esc(c)}</span>`).join("");
+}
+async function renderWeek() {
+  const end = addDays(weekStart, 7);
+  $("#weekRange").textContent = `${fmt(weekStart, { month: "long", day: "numeric" })} – ${fmt(addDays(end, -1), { month: "long", day: "numeric", year: "numeric" })}`;
+  const blk = statusBlock();
+  if (blk) { $("#weekGrid").innerHTML = blk; $("#weekLegend").innerHTML = ""; return; }
+  $("#weekLegend").innerHTML = legendHtml();
+  const evs = remember(await eventsBetween(weekStart, end));
+  const today = new Date();
+  $("#weekGrid").innerHTML = `<div class="week">${[...Array(7)].map((_, i) => {
+    const d = addDays(weekStart, i), list = onDay(evs, d);
+    return `<div class="wday ${sameDay(d, today) ? "today" : ""}"><div class="dh"><b>${d.getDate()}</b><span>${fmt(d, { weekday: "short" })}${sameDay(d, today) ? " · Today" : ""}</span></div>
+      <div class="ev-list">${list.map(e => evButton(e, { day: d })).join("") || `<p class="empty small">Free day</p>`}</div></div>`;
+  }).join("")}</div>`;
+}
+
+/* ---------- Month ---------- */
+let monthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+let selectedDay = startOfDay(new Date());
+function renderFilters() {
+  if (state.status !== "ready") { $("#filters").innerHTML = ""; return; }
+  const cats = [...new Set(state.calendars.map(c => c.category))];
+  const catChip = c => {
+    const ids = state.calendars.filter(x => x.category === c).map(x => x.id);
+    const on = ids.some(id => !state.hidden.has(id));
+    return `<button class="fchip" style="--c:${CAT_COLORS[c] || CAT_COLORS.Other}" aria-pressed="${on}" data-cat="${esc(c)}">${CAT_EMOJI[c] || ""} ${esc(c)}</button>`;
+  };
+  const srcChip = c => `<button class="fchip" style="--c:${CAT_COLORS[c.category] || CAT_COLORS.Other}" aria-pressed="${!state.hidden.has(c.id)}" data-cal="${esc(c.id)}">${esc(c.label)}</button>`;
+  $("#filters").innerHTML = `<div class="chips">${cats.map(catChip).join("")}</div>
+    <details style="margin-top:10px"><summary class="small">Filter by individual calendar (${state.calendars.length})</summary>
+    <div class="chips" style="margin-top:8px">${state.calendars.map(srcChip).join("")}</div></details>`;
+}
+async function renderMonth() {
+  $("#monthTitle").textContent = fmt(monthCursor, { month: "long", year: "numeric" });
+  renderFilters();
+  const blk = statusBlock();
+  if (blk) {
+    $("#agenda").innerHTML = "";
+    // Hosted site before sign-in: show Google's own calendar view (real data, for viewers signed in to Google).
+    const gEmbed = MODE === "google" && (state.status === "needs-setup" || state.status === "needs-signin");
+    const src = "https://calendar.google.com/calendar/embed?mode=MONTH&showPrint=0&showTitle=0&ctz=" + encodeURIComponent(CONFIG.timeZone) +
+      Object.keys(CONFIG.calendars).map(id => "&src=" + encodeURIComponent(id) + "&color=" + encodeURIComponent(CAT_COLORS[CONFIG.calendars[id].category] || "#8a8a8a")).join("");
+    $("#calBody").innerHTML = blk + (gEmbed ? `<p class="small muted" style="margin:14px 0 0">Meanwhile, here is Google's own view of the family calendars. It shows events to anyone signed in to Google in this browser with access to them.</p>
+      <iframe class="gembed" title="Google Calendar" loading="lazy" src="${esc(src)}"></iframe>` : "");
+    return;
+  }
+  const gridStart = startOfWeek(monthCursor);
+  const lastOfMonth = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 0);
+  const gridEnd = addDays(startOfWeek(lastOfMonth), 7);
+  const evs = remember(await eventsBetween(gridStart, gridEnd));
+  const today = new Date();
+  let html = `<div class="month">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => `<div class="dow">${d}</div>`).join("")}`;
+  for (let d = gridStart; d < gridEnd; d = addDays(d, 1)) {
+    const list = onDay(evs, d), out = d.getMonth() !== monthCursor.getMonth();
+    html += `<button class="mcell ${out ? "out" : ""} ${sameDay(d, today) ? "today" : ""} ${sameDay(d, selectedDay) ? "sel" : ""}" data-day="${ymd(d)}" aria-label="${fmt(d, { weekday: "long", month: "long", day: "numeric" })}, ${list.length} events">
+      <span class="num">${d.getDate()}</span>
+      ${list.slice(0, 3).map(e => `<span class="pill" style="--c:${colorOf(e)}">${e.allDay || !sameDay(e.start, d) ? "" : esc(fmtTime(e.start)) + " "}${esc(e.title)}</span>`).join("")}
+      ${list.length > 3 ? `<span class="more">+${list.length - 3} more</span>` : ""}
+      <span class="dots">${list.slice(0, 5).map(e => `<i class="dot" style="--c:${colorOf(e)}"></i>`).join("")}</span></button>`;
+  }
+  $("#calBody").innerHTML = html + "</div>";
+  const dayList = onDay(evs, selectedDay);
+  $("#agenda").innerHTML = (selectedDay >= gridStart && selectedDay < gridEnd)
+    ? `<div class="daygroup"><h3>${fmt(selectedDay, { weekday: "long", month: "long", day: "numeric" })}</h3>
+       <div class="ev-list">${dayList.map(e => evButton(e, { day: selectedDay })).join("") || `<p class="empty">No events this day.</p>`}</div></div>` : "";
+}
+
+/* ---------- Meals (automated from calendar) ---------- */
+async function renderMeals() {
+  const blk = statusBlock();
+  if (blk) { $("#meals").innerHTML = blk; return; }
+  const ws = startOfWeek(new Date()), we = addDays(ws, 7);
+  const evs = remember(await eventsBetween(ws, we, { includeHidden: true })).filter(e => /\b(breakfast|brunch|lunch|dinner|supper|meal)\b/i.test(e.title));
+  $("#meals").innerHTML = evs.length
+    ? [...Array(7)].map((_, i) => addDays(ws, i)).map(d => ({ d, l: evs.filter(e => sameDay(e.start, d)) })).filter(x => x.l.length)
+        .map(x => `<div class="daygroup"><h3>${fmt(x.d, { weekday: "long", month: "short", day: "numeric" })}${sameDay(x.d, new Date()) ? " · Today" : ""}</h3><div class="ev-list">${x.l.map(e => evButton(e)).join("")}</div></div>`).join("")
+    : `<p class="empty">No meals are on the calendar this week.</p>`;
+  $("#meals").insertAdjacentHTML("beforeend", `<p class="small muted" style="margin-top:12px">Meals show up here automatically. Add a Family Calendar event with "Breakfast", "Lunch" or "Dinner" in the title (for example, "Taco Dinner").</p>`);
+}
+
+/* ---------- Kids ---------- */
+function noSchoolSet() {
+  const s = new Set();
+  CONFIG.noSchool.forEach(x => { const [a, b] = x.split(".."); for (let d = parseYMD(a); d <= parseYMD(b || a); d = addDays(d, 1)) s.add(ymd(d)); });
+  return s;
+}
+function schoolDaysBetween(a, b) {
+  const ns = noSchoolSet(); let n = 0;
+  for (let d = startOfDay(a); d <= b; d = addDays(d, 1)) { const w = d.getDay(); if (w && w < 6 && !ns.has(ymd(d))) n++; }
+  return n;
+}
+function gradingCard() {
+  const today = startOfDay(new Date());
+  const periods = CONFIG.gradingPeriods.map(p => ({ ...p, s: parseYMD(p.start), e: parseYMD(p.end) }));
+  const cur = periods.find(p => today >= p.s && today <= p.e);
+  const next = periods.find(p => p.s > today);
+  if (!cur && !next) return `<p class="empty">The 2026-27 grading periods are over. Add next year's dates in the CONFIG section.</p>`;
+  if (!cur) return `<p><b>${esc(next.name)}</b> starts ${fmt(next.s, { weekday: "long", month: "long", day: "numeric" })}, in ${dayDiff(today, next.s)} days.</p>`;
+  const total = dayDiff(cur.s, cur.e) + 1, gone = dayDiff(cur.s, today), left = dayDiff(today, cur.e);
+  const sd = schoolDaysBetween(today, cur.e);
+  return `<p style="margin:0"><b>${esc(cur.name)}</b> ends <b>${fmt(cur.e, { weekday: "long", month: "long", day: "numeric" })}</b></p>
+    <div class="count" style="grid-template-columns:repeat(2,1fr)"><div><b>${left}</b><small>calendar days</small></div><div><b>${sd}</b><small>school days left</small></div></div>
+    <div class="bar" role="progressbar" aria-valuenow="${Math.round(gone / total * 100)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.min(100, Math.round(gone / total * 100))}%"></i></div>
+    <div class="small muted">${fmt(cur.s, { month: "short", day: "numeric" })} – ${fmt(cur.e, { month: "short", day: "numeric" })} · ${Math.round(gone / total * 100)}% of the way through</div>`;
+}
+function renderKidStatic(id) {
+  const k = CONFIG.kids[id];
+  const cls = k.classroomLinks.length
+    ? `<div class="links">${k.classroomLinks.map(l => `<a class="biglink" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="em">📘</span>${esc(l.label)}</a>`).join("")}</div>`
+    : `<p class="empty">No class links have been added for ${esc(k.name)} yet.</p>`;
+  $("#page-" + id).innerHTML = `
+    <div class="page-head"><div class="kid-hero"><span class="avatar">${k.emoji}</span><div><h1>${esc(k.name)}</h1><p>School at a glance</p></div></div></div>
+    <div class="grid">
+      <div class="card"><h2>⏳ Grading period countdown</h2>${gradingCard()}</div>
+      <div class="card"><h2>🎓 Google Classroom</h2>
+        <div class="notice" style="margin-bottom:12px"><b>Assignments aren't shown here</b>Google Classroom isn't connected to this site, so homework and due dates can't be pulled in automatically. Classroom integration would require the school's Google account to allow it. Use the links below to check Classroom directly.</div>
+        ${cls}
+        <div class="row" style="margin-top:12px"><a class="btn sm" href="https://classroom.google.com" target="_blank" rel="noopener">Open Google Classroom</a></div>
+      </div>
+      <div class="card"><h2>🔗 School resources</h2><div class="links">${CONFIG.schoolResources.map(l =>
+        `<a class="biglink" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="em">${l.emoji}</span>${esc(l.label)}</a>`).join("")}</div></div>
+      <div class="card"><h2>🏫 Upcoming school events</h2><div class="kid-school">${statusBlock() || '<span class="spinner"></span>'}</div></div>
+    </div>`;
+}
+async function renderKid(id) {
+  renderKidStatic(id);
+  if (state.status !== "ready") return;
+  const today = startOfDay(new Date());
+  const evs = remember(await eventsBetween(today, addDays(today, 21), { includeHidden: true })).filter(e => e.cal.category === "School");
+  const el = $("#page-" + id + " .kid-school");
+  el.innerHTML = evs.length ? `<div class="ev-list">${evs.slice(0, 10).map(e => evButton(e, { showDate: true })).join("")}</div>`
+    : `<p class="empty">No school calendar events in the next three weeks.</p>`;
+}
+
+/* ---------- Embeds (Groceries + Bulletin Board) ---------- */
+function renderEmbeds() {
+  $("#hebBtn").href = CONFIG.links.heb;
+  const openLink = (url, label) => `<a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`;
+  const plain = u => u.replace(/([?&])(embedded=true|widget=true)&?/g, "$1").replace(/[?&]$/, "");
+  if (MODE === "claude") {
+    // Claude previews can't frame other websites, so offer direct links here.
+    const note = `<p class="small muted">This preview can't embed Google pages. They appear embedded on the hosted family site.</p>`;
+    $("#formSlot").innerHTML = note + openLink(plain(CONFIG.links.groceryForm), "➕ Open the Add Grocery Item form");
+    $("#sheetSlot").innerHTML = note + openLink(CONFIG.links.grocerySheet.replace("widget=true&", ""), "📋 Open the grocery list");
+    $("#boardSlot").innerHTML = note + `<div class="row">${openLink(plain(CONFIG.links.bulletinDoc), "📌 Open the bulletin board")}</div>`;
+    return;
+  }
+  $("#formSlot").innerHTML = `<iframe class="embed form" title="Add grocery item" loading="lazy" src="${esc(CONFIG.links.groceryForm)}">Loading…</iframe>`;
+  $("#sheetSlot").innerHTML = `<iframe class="embed sheet" title="Current grocery list" loading="lazy" src="${esc(CONFIG.links.grocerySheet)}"></iframe>
+    <p class="small"><a href="${esc(CONFIG.links.grocerySheet.replace("widget=true&", ""))}" target="_blank" rel="noopener">Open the list in a new tab ↗</a></p>`;
+  $("#boardSlot").innerHTML = `<iframe class="embed doc" title="Family bulletin board" loading="lazy" src="${esc(CONFIG.links.bulletinDoc)}"></iframe>
+    <div class="row" style="margin-top:10px;justify-content:center">
+      ${CONFIG.links.bulletinEdit ? openLink(CONFIG.links.bulletinEdit, "✏️ Edit the board") : ""}
+      <a class="btn ghost sm" href="${esc(plain(CONFIG.links.bulletinDoc))}" target="_blank" rel="noopener">Open full page ↗</a></div>`;
+}
+
+/* =====================================================================
+   EVENT DETAILS MODAL
+   ===================================================================== */
+function linkify(t) { return esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+function openEvent(key) {
+  const e = evIndex.get(key); if (!e) return;
+  const sameD = sameDay(e.start, addDays(e.end, e.allDay ? -1 : 0));
+  const when = e.allDay
+    ? (sameD ? fmt(e.start, { weekday: "long", month: "long", day: "numeric" }) + " · All day"
+             : `${fmt(e.start, { weekday: "short", month: "short", day: "numeric" })} – ${fmt(addDays(e.end, -1), { weekday: "short", month: "short", day: "numeric" })}`)
+    : sameDay(e.start, e.end) || e.end - e.start < 1000
+      ? `${fmt(e.start, { weekday: "long", month: "long", day: "numeric" })} · ${fmtTime(e.start)} – ${fmtTime(e.end)}`
+      : `${fmt(e.start, { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(e.start)} – ${fmt(e.end, { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(e.end)}`;
+  const m = $("#modal"); m.style.setProperty("--c", colorOf(e));
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
+    <span class="tag" style="--c:${colorOf(e)}">${CAT_EMOJI[e.cal.category] || ""} ${esc(e.cal.category)} · ${esc(e.cal.label)}</span>
+    <h3 id="mTitle" style="margin-top:10px">${esc(e.title)}</h3>
+    <div class="meta"><div><span>🕒</span><span>${esc(when)}</span></div>
+    ${e.location ? `<div><span>📍</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" rel="noopener">${esc(e.location)}</a></span></div>` : ""}</div>
+    ${e.description ? `<div class="desc">${linkify(e.description)}</div>` : ""}
+    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(e.link)}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
+  $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
+}
+function closeModal() { $("#modalBg").classList.remove("open"); }
+
+/* =====================================================================
+   ROUTING + EVENTS
+   ===================================================================== */
+const PAGES = ["home", "week", "calendar", "meals", "graham", "holden", "board"];
+function current() { const h = (location.hash || "").slice(1); return PAGES.includes(h) ? h : "home"; }
+function renderCurrent() {
+  const p = current();
+  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
+  if (run) Promise.resolve(run()).then(setSync).catch(err => {
+    if (err && err.auth) { gToken = null; return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar."); }
+    setStatus("error", MODE === "claude" ? mcpErrorText(err) : (err.message || "Couldn't load events."));
+  });
+}
+function renderAll() { renderCurrent(); }
+function route() {
+  const p = current();
+  document.querySelectorAll("section.page").forEach(s => s.classList.toggle("active", s.id === "page-" + p));
+  document.querySelectorAll("nav.tabs a").forEach(a => { if (a.getAttribute("href") === "#" + p) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
+  $("#menuLabel").textContent = $("#page-" + p).dataset.title;
+  $("#tabs").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false");
+  document.title = `${$("#page-" + p).dataset.title.replace(/^\S+\s/, "")} · Heilman Family Command Center`;
+  renderCurrent();
+  window.scrollTo({ top: 0 });
+}
+window.addEventListener("hashchange", route);
+$("#menuBtn").addEventListener("click", () => { const o = $("#tabs").classList.toggle("open"); $("#menuBtn").setAttribute("aria-expanded", o); });
+$("#weekPrev").onclick = () => { weekStart = addDays(weekStart, -7); renderWeek().then(setSync); };
+$("#weekNext").onclick = () => { weekStart = addDays(weekStart, 7); renderWeek().then(setSync); };
+$("#weekToday").onclick = () => { weekStart = startOfWeek(new Date()); renderWeek().then(setSync); };
+$("#monPrev").onclick = () => { monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() - 1, 1); selectedDay = monthCursor; renderMonth().then(setSync); };
+$("#monNext").onclick = () => { monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth() + 1, 1); selectedDay = monthCursor; renderMonth().then(setSync); };
+$("#monToday").onclick = () => { const t = new Date(); monthCursor = new Date(t.getFullYear(), t.getMonth(), 1); selectedDay = startOfDay(t); renderMonth().then(setSync); };
+document.addEventListener("click", ev => {
+  const t = ev.target.closest("[data-ev],[data-day],[data-cat],[data-cal],[data-act]"); if (!t) return;
+  if (t.dataset.ev) return openEvent(t.dataset.ev);
+  if (t.dataset.act === "close") return closeModal();
+  if (t.dataset.act === "signin") return signIn().catch(e => setStatus("error", e.message));
+  if (t.dataset.act === "retry") return boot();
+  if (t.dataset.day) {
+    selectedDay = parseYMD(t.dataset.day);
+    if (selectedDay.getMonth() !== monthCursor.getMonth()) monthCursor = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1);
+    renderMonth().then(() => { if (window.innerWidth < 760) $("#agenda").scrollIntoView({ behavior: "smooth", block: "nearest" }); });
+    return;
+  }
+  if (t.dataset.cat) {
+    const ids = state.calendars.filter(c => c.category === t.dataset.cat).map(c => c.id);
+    const anyOn = ids.some(id => !state.hidden.has(id));
+    ids.forEach(id => anyOn ? state.hidden.add(id) : state.hidden.delete(id));
+  } else if (t.dataset.cal) {
+    state.hidden.has(t.dataset.cal) ? state.hidden.delete(t.dataset.cal) : state.hidden.add(t.dataset.cal);
+  }
+  store.set("hidden", [...state.hidden]);
+  renderMonth();
+});
+$("#modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") closeModal(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
+
+/* ---------- go ---------- */
+applyTheme();
+tickCountdown(); setInterval(tickCountdown, 1000);
+setInterval(applyTheme, 30 * 60e3);
+loadWeather(); setInterval(loadWeather, 30 * 60e3);
+renderEmbeds();
+route();
+boot();
+</script>
+</body>
+</html>
