@@ -651,6 +651,7 @@ const state = {
   status: "loading",          // loading | ready | needs-setup | needs-signin | error
   statusMsg: "",
   calendars: [],              // [{id,label,category,color}]
+  account: "",                // signed-in Google account (used so links open in the right account)
   months: new Map(),          // "YYYY-MM" -> Promise<events[]>
   hidden: new Set(store.get("hidden", [])),
   lastSync: null,
@@ -770,9 +771,14 @@ function setStatus(s, msg = "") { state.status = s; state.statusMsg = msg; rende
 async function loadCalendars() {
   if (MODE === "claude") {
     const p = await mcpCall("list_calendars", {});
+    const own = (p.calendars || p.items || []).find(c => c.primary) ||
+      (p.calendars || p.items || []).find(c => /@/.test(c.id) && !/calendar\.google\.com$/.test(c.id));
+    state.account = own ? own.id : "";
     return (p.calendars || p.items || []).map(c => describeCalendar(c.id, c.summary, c.primary));
   }
   const p = await gapi("users/me/calendarList", { minAccessRole: "reader", maxResults: 250 });
+  const own = (p.items || []).find(c => c.primary);
+  state.account = own ? own.id : "";
   return (p.items || []).filter(c => !c.hidden).map(c => describeCalendar(c.id, c.summaryOverride || c.summary, c.primary));
 }
 
@@ -1092,7 +1098,7 @@ function openEvent(key) {
     <div class="meta"><div><span>🕒</span><span>${esc(when)}</span></div>
     ${e.location ? `<div><span>📍</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" rel="noopener">${esc(e.location)}</a></span></div>` : ""}</div>
     ${e.description ? `<div class="desc">${linkify(e.description)}</div>` : ""}
-    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(e.link)}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
+    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(e.link + (state.account ? (e.link.includes("?") ? "&" : "?") + "authuser=" + encodeURIComponent(state.account) : ""))}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
 function closeModal() { $("#modalBg").classList.remove("open"); }
