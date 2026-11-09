@@ -64,6 +64,13 @@ nav.tabs a[aria-current="page"]{background:var(--accent);color:#fff}
   nav.tabs a{padding:12px 14px;border-radius:12px;font-size:1rem}
 }
 
+.acct{font-size:.8rem;background:color-mix(in srgb,var(--accent) 10%,var(--card));border-bottom:1px solid var(--line)}
+.acct .wrap{display:flex;gap:6px 14px;align-items:center;justify-content:space-between;flex-wrap:wrap;min-height:30px;padding-top:4px;padding-bottom:4px}
+.acct #acctHello{font-weight:800}
+.acct #acctInfo{display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap;color:var(--muted)}
+.acct button{border:0;background:none;color:var(--accent);font-weight:800;cursor:pointer;padding:0;font-size:.8rem;text-decoration:underline}
+.acct .warn{color:#9a5b00;font-weight:800}
+
 /* ============================== LAYOUT PRIMITIVES */
 main{padding:22px 0 60px}
 section.page{display:none}
@@ -127,6 +134,8 @@ section.page.active{display:block;animation:fade .25s ease}
 .weather{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .weather .big{font-size:3rem;line-height:1}
 .weather .temp{font-family:var(--font-head);font-size:2.4rem;font-weight:700}
+.tomorrow{display:flex;gap:12px;align-items:center;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.tomorrow .em{font-size:1.8rem}
 
 /* ============================== EVENT LISTS */
 .ev-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -165,7 +174,9 @@ section.page.active{display:block;animation:fade .25s ease}
 .cal-toolbar .navgrp{display:flex;gap:8px}
 .gembed{width:100%;height:clamp(480px,75vh,820px);border:0;border-radius:12px;margin-top:14px;background:#fff}
 .filters{margin-bottom:14px}
-.filters details summary{cursor:pointer;font-weight:800;margin-bottom:8px}
+.fgroup{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;flex-wrap:wrap}
+.fglabel{flex:0 0 130px;font-weight:800;font-size:.82rem;padding-top:8px;color:var(--muted)}
+@media (max-width:640px){.fglabel{flex-basis:100%;padding-top:0}}
 .fchip{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border-radius:999px;cursor:pointer;
   border:2px solid var(--c,#999);background:color-mix(in srgb,var(--c,#999) 14%,var(--card));font-weight:700;font-size:.86rem;color:var(--ink)}
 .fchip[aria-pressed="false"]{background:var(--card);opacity:.55;border-style:dashed}
@@ -251,6 +262,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
 </head>
 <body>
 
+<div class="acct" id="acct"><div class="wrap"><span id="acctHello">👋 Welcome!</span><span id="acctInfo"></span></div></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#home" aria-label="Heilman Family Command Center home">
@@ -291,7 +303,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <div class="card">
         <h2>🎉 <span id="holidayName">Next holiday</span></h2>
         <div id="holidayWhen" class="muted small"></div>
-        <div class="count" id="countdown" aria-live="off"></div>
+        <div class="count" id="countdown" aria-live="off" style="grid-template-columns:repeat(2,1fr)"></div>
       </div>
       <div class="card">
         <h2>🌤️ Today's weather <span class="tag" style="--c:var(--accent2)" id="weatherLoc"></span></h2>
@@ -351,6 +363,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   <section class="page" id="page-meals" data-title="🍽️ Meal Plan & Groceries">
     <div class="page-head">
       <div><h1>Meal Plan &amp; Groceries</h1><p>What's cooking this week, and what we need from the store.</p></div>
+      <a class="btn heb" id="hebBtn" target="_blank" rel="noopener">🛒 Open HEB Shopping List</a>
     </div>
     <div class="card">
       <h2>🍲 This week's meals <span class="sync" id="syncMeals"></span></h2>
@@ -366,9 +379,6 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         </details>
         <h2 style="font-size:1.25rem;margin:4px 0 12px">Current Grocery List</h2>
         <div id="sheetSlot"></div>
-        <div class="row" style="margin-top:16px">
-          <a class="btn heb" id="hebBtn" target="_blank" rel="noopener">🛒 Open HEB Shopping List</a>
-        </div>
       </div>
     </details>
   </section>
@@ -425,10 +435,14 @@ const CONFIG = {
     "nvm1mgdbh0d8t6dkv8e0udu3okh2bhd9@import.calendar.google.com": { label: "Scout Troop", category: "Scouts" },
     "u8iu9eblt3vcrh66b3qs9rs636cbi310@import.calendar.google.com": { label: "Twisters", category: "Sports" },
     "f9ar4fr5qsknnlc0evetmqd798lrbf5d@import.calendar.google.com": { label: "K-State Football", category: "Sports" },
-    "leanderisd.org_00jknjkfj64fr8ikjnfdq2q0b4@group.calendar.google.com": { label: "LISD Middle School", category: "School" },
-    "leanderisd.org_250983jvv44tcs4o6q986rdcbk@group.calendar.google.com": { label: "LISD High School", category: "School" },
-    "dtn4m5pgtncgrevedb4n4ce95i064j0q@import.calendar.google.com": { label: "Cedar Park MS", category: "School" },
-    "u35k927b4ics7n9bi5matv2qjjj18lbl@import.calendar.google.com": { label: "Cedar Park HS", category: "School" }
+    "perls321r70jsenpd4ovs6u1hfe122ha@import.calendar.google.com": { label: "Cedar Park 6th Grade", category: "Sports" },
+    "leanderisd.org_3grot6ac0ug4prua1smkvfsmu8@group.calendar.google.com": { label: "LISD District", category: "ISD" },
+    "leanderisd.org_j0ntigaovlvqt9v75dbb082o0k@group.calendar.google.com": { label: "LISD Secondary", category: "ISD" },
+    "leanderisd.org_250983jvv44tcs4o6q986rdcbk@group.calendar.google.com": { label: "LISD High School", category: "ISD" },
+    "leanderisd.org_00jknjkfj64fr8ikjnfdq2q0b4@group.calendar.google.com": { label: "LISD Middle School", category: "ISD" },
+    "leanderisd.org_u5tfmsd61ci4efq5s1bac16uvk@group.calendar.google.com": { label: "LISD Campus", category: "ISD" },
+    "u35k927b4ics7n9bi5matv2qjjj18lbl@import.calendar.google.com": { label: "Cedar Park HS", category: "Parent Square" },
+    "dtn4m5pgtncgrevedb4n4ce95i064j0q@import.calendar.google.com": { label: "Cedar Park MS", category: "Parent Square" }
   },
 
   links: {
@@ -600,10 +614,9 @@ function tickCountdown() {
   }
   let ms = h.d - now;
   const D = Math.floor(ms / 864e5); ms -= D * 864e5;
-  const H = Math.floor(ms / 36e5); ms -= H * 36e5;
-  const M = Math.floor(ms / 6e4); const S = Math.floor((ms - M * 6e4) / 1000);
+  const H = Math.floor(ms / 36e5);
   $("#holidayWhen").textContent = fmt(h.d, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  $("#countdown").innerHTML = [[D,"days"],[H,"hours"],[M,"min"],[S,"sec"]].map(([v,l]) => `<div><b>${v}</b><small>${l}</small></div>`).join("");
+  $("#countdown").innerHTML = [[D, D === 1 ? "day" : "days"],[H, H === 1 ? "hour" : "hours"]].map(([v,l]) => `<div><b>${v}</b><small>${l}</small></div>`).join("");
 }
 
 /* =====================================================================
@@ -616,8 +629,8 @@ async function loadWeather() {
   $("#weatherLoc").textContent = CONFIG.location.name;
   const L = CONFIG.location;
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${L.lat}&longitude=${L.lon}` +
-    `&current=temperature_2m,apparent_temperature,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
-    `&temperature_unit=fahrenheit&timezone=${encodeURIComponent(CONFIG.timeZone)}&forecast_days=1`;
+    `&current=temperature_2m,apparent_temperature,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max` +
+    `&temperature_unit=fahrenheit&timezone=${encodeURIComponent(CONFIG.timeZone)}&forecast_days=2`;
   try {
     const r = await fetch(url); if (!r.ok) throw new Error(r.status);
     const w = await r.json();
@@ -625,7 +638,9 @@ async function loadWeather() {
     $("#weather").innerHTML = `<div class="weather"><span class="big">${icon}</span>
       <div><div class="temp">${Math.round(w.current.temperature_2m)}°</div><div class="muted small">Feels like ${Math.round(w.current.apparent_temperature)}°</div></div>
       <div><b>${label}</b><div class="small">High ${Math.round(w.daily.temperature_2m_max[0])}° · Low ${Math.round(w.daily.temperature_2m_min[0])}°</div>
-      <div class="small">☔ ${w.daily.precipitation_probability_max[0] ?? 0}% chance of rain</div></div></div>`;
+      <div class="small">☔ ${w.daily.precipitation_probability_max[0] ?? 0}% chance of rain</div></div></div>
+      <div class="tomorrow"><span class="em">${WMO(w.daily.weather_code[1])[0]}</span>
+      <div><b>Tomorrow</b> · ${WMO(w.daily.weather_code[1])[1]}<div class="small">High ${Math.round(w.daily.temperature_2m_max[1])}° · Low ${Math.round(w.daily.temperature_2m_min[1])}° · ☔ ${w.daily.precipitation_probability_max[1] ?? 0}%</div></div></div>`;
   } catch {
     $("#weather").innerHTML = MODE === "claude"
       ? `<p class="empty">Live weather appears on the hosted family site. This preview can't reach the weather service.</p>`
@@ -644,8 +659,9 @@ async function loadWeather() {
    ===================================================================== */
 const MODE = (typeof window.claude === "object" && window.claude && typeof window.claude.use === "function") ? "claude" : "google";
 const CAT_COLORS = { "Family Events":"#e0584c", "Personal Events":"#7a63d1", "Holidays":"#d49b00", "Scouts":"#2f8a52",
-                     "Sports":"#1f74c4", "School":"#e0782f", "Other":"#8a8a8a" };
-const CAT_EMOJI  = { "Family Events":"🏡", "Personal Events":"👤", "Holidays":"🎉", "Scouts":"⚜️", "Sports":"🏅", "School":"🏫", "Other":"📌" };
+                     "Sports":"#1f74c4", "ISD":"#e0782f", "Parent Square":"#0f8f86", "Other":"#8a8a8a" };
+const CAT_EMOJI  = { "Family Events":"🏡", "Personal Events":"👤", "Holidays":"🎉", "Scouts":"⚜️", "Sports":"🏅", "ISD":"🏫", "Parent Square":"📣", "Other":"📌" };
+const GROUP_ORDER = ["Family Events", "Personal Events", "ISD", "Parent Square", "Sports", "Scouts", "Holidays", "Other"];
 
 const state = {
   status: "loading",          // loading | ready | needs-setup | needs-signin | error
@@ -664,7 +680,8 @@ function describeCalendar(id, summary, primary) {
   let label = summary || id;
   if (/^(webcal|https?):\/\//i.test(label)) { try { label = new URL(label.replace(/^webcal/i, "https")).hostname.replace(/^www\./, ""); } catch {} }
   const s = (summary || "").toLowerCase();
-  const category = /holiday/.test(s) ? "Holidays" : /school|isd|\bhs\b|\bms\b|elementary|middle|high/.test(s) ? "School" :
+  if (primary) label = "My calendar";
+  const category = /holiday/.test(s) ? "Holidays" : /parentsquare|parent square/.test(s) ? "Parent Square" : /school|isd|\bhs\b|\bms\b|elementary|middle|high/.test(s) ? "ISD" :
     /troop|scout|cub|pack\b/.test(s) ? "Scouts" : /football|soccer|baseball|softball|basketball|volleyball|swim|sports|team/.test(s) ? "Sports" :
     /family/.test(s) ? "Family Events" : primary ? "Personal Events" : "Other";
   return { id, label, category };
@@ -713,21 +730,64 @@ function loadGis() {
     s.onload = res; s.onerror = () => rej(new Error("Google sign-in script failed to load")); document.head.appendChild(s);
   });
 }
-async function signIn() {
+const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+state.profile = store.get("profile", null);   // { name, email } of the Google account used on this device
+async function signIn({ switchAccount = false } = {}) {
   await loadGis();
   if (!tokenClient) {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CONFIG.googleClientId,
-      scope: "https://www.googleapis.com/auth/calendar.readonly",
-      callback: r => {
+      scope: "openid email profile " + CAL_SCOPE,
+      callback: async r => {
         if (r.error) { setStatus("needs-signin", "Google sign-in didn't finish. Try again."); return; }
+        if (!google.accounts.oauth2.hasGrantedAllScopes(r, CAL_SCOPE)) {
+          setStatus("needs-signin", "Google sign-in worked, but calendar access wasn't allowed. Sign in again and check the box to let the site see your calendars.");
+          return;
+        }
         gToken = { t: r.access_token, exp: Date.now() + (r.expires_in || 3600) * 1000 };
         store.set("gtoken", gToken); store.set("signedIn", true);
+        try {
+          const u = await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + gToken.t } })).json();
+          state.profile = { name: u.given_name || u.name || nameFromEmail(u.email), email: u.email || "" };
+          store.set("profile", state.profile);
+        } catch {}
         boot();
       }
     });
   }
-  tokenClient.requestAccessToken({ prompt: store.get("signedIn", false) ? "" : "consent" });
+  const remembered = state.profile && state.profile.email;
+  if (switchAccount) tokenClient.requestAccessToken({ prompt: "select_account" });
+  // The "hint" pre-selects the account this device used last, so the right Google account is chosen automatically.
+  else tokenClient.requestAccessToken(remembered ? { prompt: "", hint: remembered } : { prompt: "select_account" });
+}
+function signOut() {
+  try { if (gToken && window.google && google.accounts) google.accounts.oauth2.revoke(gToken.t, () => {}); } catch {}
+  gToken = null; state.profile = null; state.account = "";
+  store.set("gtoken", null); store.set("profile", null); store.set("signedIn", false);
+  boot();
+}
+function nameFromEmail(e) {
+  const w = String(e || "").split("@")[0].split(/[._\d-]/)[0];
+  return w ? w[0].toUpperCase() + w.slice(1) : "";
+}
+function renderAccount() {
+  const p = state.profile, email = (p && p.email) || state.account;
+  const name = (p && p.name) || nameFromEmail(email);
+  $("#acctHello").textContent = name ? `👋 Welcome, ${name}!` : "👋 Welcome!";
+  const famId = Object.keys(CONFIG.calendars).find(id => CONFIG.calendars[id].category === "Family Events");
+  const noFamily = state.status === "ready" && famId && !state.calendars.some(c => c.id === famId);
+  let info = "";
+  if (MODE === "claude") info = email ? `<span>📅 Calendar from Google account <b>${esc(email)}</b> (Claude preview)</span>` : "";
+  else if (!CONFIG.googleClientId) info = "";
+  else if (gToken && (state.status === "ready" || state.status === "loading")) {
+    info = `<span>✅ Connected to Google as <b>${esc(email || "your account")}</b></span>
+      <button data-act="switch">Switch account</button><button data-act="signout">Sign out</button>`;
+  } else {
+    info = `<span>Not connected to Google</span><button data-act="signin">Sign in${p && p.email ? " as " + esc(p.email) : ""}</button>` +
+      (p && p.email ? `<button data-act="switch">Use another account</button>` : "");
+  }
+  if (noFamily) info = `<span class="warn">⚠️ This Google account can't see the Family calendar.</span>` + info;
+  $("#acctInfo").innerHTML = info;
 }
 async function gapi(path, params = {}) {
   const u = new URL("https://www.googleapis.com/calendar/v3/" + path);
@@ -774,7 +834,7 @@ async function loadCalendars() {
     const own = (p.calendars || p.items || []).find(c => c.primary) ||
       (p.calendars || p.items || []).find(c => /@/.test(c.id) && !/calendar\.google\.com$/.test(c.id));
     state.account = own ? own.id : "";
-    return (p.calendars || p.items || []).map(c => describeCalendar(c.id, c.summary, c.primary));
+    return (p.calendars || p.items || []).map(c => describeCalendar(c.id, c.summary, c.primary || c.id === state.account));
   }
   const p = await gapi("users/me/calendarList", { minAccessRole: "reader", maxResults: 250 });
   const own = (p.items || []).find(c => c.primary);
@@ -839,6 +899,7 @@ async function boot() {
     }
     setStatus("loading", "Loading calendars…");
     state.calendars = await loadCalendars();
+    renderAccount();
     if (!state.calendars.length) return setStatus("error", "No calendars were found on this Google account.");
     state.status = "ready"; renderAll();
   } catch (e) {
@@ -943,16 +1004,14 @@ let monthCursor = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
 let selectedDay = startOfDay(new Date());
 function renderFilters() {
   if (state.status !== "ready") { $("#filters").innerHTML = ""; return; }
-  const cats = [...new Set(state.calendars.map(c => c.category))];
-  const catChip = c => {
-    const ids = state.calendars.filter(x => x.category === c).map(x => x.id);
-    const on = ids.some(id => !state.hidden.has(id));
-    return `<button class="fchip" style="--c:${CAT_COLORS[c] || CAT_COLORS.Other}" aria-pressed="${on}" data-cat="${esc(c)}">${CAT_EMOJI[c] || ""} ${esc(c)}</button>`;
-  };
+  const cats = [...new Set(state.calendars.map(c => c.category))].sort((a, b) => GROUP_ORDER.indexOf(a) - GROUP_ORDER.indexOf(b));
   const srcChip = c => `<button class="fchip" style="--c:${CAT_COLORS[c.category] || CAT_COLORS.Other}" aria-pressed="${!state.hidden.has(c.id)}" data-cal="${esc(c.id)}">${esc(c.label)}</button>`;
-  $("#filters").innerHTML = `<div class="chips">${cats.map(catChip).join("")}</div>
-    <details style="margin-top:10px"><summary class="small">Filter by individual calendar (${state.calendars.length})</summary>
-    <div class="chips" style="margin-top:8px">${state.calendars.map(srcChip).join("")}</div></details>`;
+  const hiddenCount = state.calendars.filter(c => state.hidden.has(c.id)).length;
+  $("#filters").innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:10px">
+      <span class="small muted">Tap calendars to show or hide them everywhere on the site${hiddenCount ? ` · <b>${hiddenCount} hidden</b>` : ""}</span>
+      <span class="row"><button class="btn ghost sm" data-act="showall">Show all</button><button class="btn ghost sm" data-act="hideall">Hide all</button></span></div>
+    ${cats.map(g => `<div class="fgroup"><div class="fglabel">${CAT_EMOJI[g] || ""} ${esc(g === "Family Events" ? "Family" : g === "Personal Events" ? "Personal" : g)}</div>
+      <div class="chips">${state.calendars.filter(c => c.category === g).map(srcChip).join("")}</div></div>`).join("")}`;
 }
 async function renderMonth() {
   $("#monthTitle").textContent = fmt(monthCursor, { month: "long", year: "numeric" });
@@ -994,7 +1053,7 @@ async function renderMeals() {
   const blk = statusBlock();
   if (blk) { $("#meals").innerHTML = blk; return; }
   const ws = startOfWeek(new Date()), we = addDays(ws, 7);
-  const evs = remember(await eventsBetween(ws, we, { includeHidden: true })).filter(e => /\b(breakfast|brunch|lunch|dinner|supper|meal)\b/i.test(e.title));
+  const evs = remember(await eventsBetween(ws, we)).filter(e => /\b(breakfast|brunch|lunch|dinner|supper|meal)\b/i.test(e.title));
   $("#meals").innerHTML = evs.length
     ? [...Array(7)].map((_, i) => addDays(ws, i)).map(d => ({ d, l: evs.filter(e => sameDay(e.start, d)) })).filter(x => x.l.length)
         .map(x => `<div class="daygroup"><h3>${fmt(x.d, { weekday: "long", month: "short", day: "numeric" })}${sameDay(x.d, new Date()) ? " · Today" : ""}</h3><div class="ev-list">${x.l.map(e => evButton(e)).join("")}</div></div>`).join("")
@@ -1050,7 +1109,7 @@ async function renderKid(id) {
   renderKidStatic(id);
   if (state.status !== "ready") return;
   const today = startOfDay(new Date());
-  const evs = remember(await eventsBetween(today, addDays(today, 21), { includeHidden: true })).filter(e => e.cal.category === "School");
+  const evs = remember(await eventsBetween(today, addDays(today, 21))).filter(e => e.cal.category === "ISD" || e.cal.category === "Parent Square");
   const el = $("#page-" + id + " .kid-school");
   el.innerHTML = evs.length ? `<div class="ev-list">${evs.slice(0, 10).map(e => evButton(e, { showDate: true })).join("")}</div>`
     : `<p class="empty">No school calendar events in the next three weeks.</p>`;
@@ -1098,8 +1157,14 @@ function openEvent(key) {
     <div class="meta"><div><span>🕒</span><span>${esc(when)}</span></div>
     ${e.location ? `<div><span>📍</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" rel="noopener">${esc(e.location)}</a></span></div>` : ""}</div>
     ${e.description ? `<div class="desc">${linkify(e.description)}</div>` : ""}
-    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(e.link + (state.account ? (e.link.includes("?") ? "&" : "?") + "authuser=" + encodeURIComponent(state.account) : ""))}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
+    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(calendarLink(e.link))}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
+}
+function calendarLink(link) {
+  const who = (state.profile && state.profile.email) || state.account;
+  let eid = ""; try { eid = new URL(link).searchParams.get("eid") || ""; } catch {}
+  if (!eid) return link;
+  return "https://calendar.google.com/calendar/event?eid=" + encodeURIComponent(eid) + (who ? "&authuser=" + encodeURIComponent(who) : "");
 }
 function closeModal() { $("#modalBg").classList.remove("open"); }
 
@@ -1116,7 +1181,7 @@ function renderCurrent() {
     setStatus("error", MODE === "claude" ? mcpErrorText(err) : (err.message || "Couldn't load events."));
   });
 }
-function renderAll() { renderCurrent(); }
+function renderAll() { renderAccount(); renderCurrent(); }
 function route() {
   const p = current();
   document.querySelectorAll("section.page").forEach(s => s.classList.toggle("active", s.id === "page-" + p));
@@ -1141,6 +1206,12 @@ document.addEventListener("click", ev => {
   if (t.dataset.act === "close") return closeModal();
   if (t.dataset.act === "signin") return signIn().catch(e => setStatus("error", e.message));
   if (t.dataset.act === "retry") return boot();
+  if (t.dataset.act === "switch") return signIn({ switchAccount: true }).catch(e => setStatus("error", e.message));
+  if (t.dataset.act === "signout") return signOut();
+  if (t.dataset.act === "showall" || t.dataset.act === "hideall") {
+    state.hidden = new Set(t.dataset.act === "hideall" ? state.calendars.map(c => c.id) : []);
+    store.set("hidden", [...state.hidden]); return renderMonth();
+  }
   if (t.dataset.day) {
     selectedDay = parseYMD(t.dataset.day);
     if (selectedDay.getMonth() !== monthCursor.getMonth()) monthCursor = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1);
@@ -1162,7 +1233,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal()
 
 /* ---------- go ---------- */
 applyTheme();
-tickCountdown(); setInterval(tickCountdown, 1000);
+tickCountdown(); setInterval(tickCountdown, 60e3);
 setInterval(applyTheme, 30 * 60e3);
 loadWeather(); setInterval(loadWeather, 30 * 60e3);
 renderEmbeds();
