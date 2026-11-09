@@ -750,7 +750,6 @@ async function signIn({ switchAccount = false } = {}) {
           const u = await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + gToken.t } })).json();
           state.profile = { name: u.given_name || u.name || nameFromEmail(u.email), email: u.email || "" };
           store.set("profile", state.profile);
-          renderEmbeds();
         } catch {}
         boot();
       }
@@ -1129,10 +1128,7 @@ function renderEmbeds() {
     $("#boardSlot").innerHTML = note + `<div class="row">${openLink(plain(CONFIG.links.bulletinDoc), "📌 Open the bulletin board")}</div>`;
     return;
   }
-  // Ask Google to use the same account that signed in to this site (Google otherwise uses the browser's default account).
-  const who = state.profile && state.profile.email;
-  const asUser = u => who ? u + (u.includes("?") ? "&" : "?") + "authuser=" + encodeURIComponent(who) : u;
-  $("#formSlot").innerHTML = `<iframe class="embed form" title="Add grocery item" loading="lazy" src="${esc(asUser(CONFIG.links.groceryForm))}">Loading…</iframe>`;
+  $("#formSlot").innerHTML = `<iframe class="embed form" title="Add grocery item" loading="lazy" src="${esc(CONFIG.links.groceryForm)}">Loading…</iframe>`;
   $("#sheetSlot").innerHTML = `<iframe class="embed sheet" title="Current grocery list" loading="lazy" src="${esc(CONFIG.links.grocerySheet)}"></iframe>
     <p class="small"><a href="${esc(CONFIG.links.grocerySheet.replace("widget=true&", ""))}" target="_blank" rel="noopener">Open the list in a new tab ↗</a></p>`;
   $("#boardSlot").innerHTML = `<iframe class="embed doc" title="Family bulletin board" loading="lazy" src="${esc(CONFIG.links.bulletinDoc)}"></iframe>
@@ -1161,7 +1157,7 @@ function openEvent(key) {
     <div class="meta"><div><span>🕒</span><span>${esc(when)}</span></div>
     ${e.location ? `<div><span>📍</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" rel="noopener">${esc(e.location)}</a></span></div>` : ""}</div>
     ${e.description ? `<div class="desc">${linkify(e.description)}</div>` : ""}
-    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(calendarLink(e.link))}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
+    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(e.link)}" target="_blank" rel="noopener">Open in Google Calendar ↗</a></div>` : ""}`;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
 function calendarLink(link) {
