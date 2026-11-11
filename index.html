@@ -231,6 +231,18 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 .heb{background:#e31837}
 .heb:hover{background:#c9102c}
 
+.dinners{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}
+.dn{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--card);display:flex;flex-direction:column;gap:8px;min-width:0}
+.dn.today{outline:3px solid var(--accent);outline-offset:-1px}
+.dn .dd{display:flex;align-items:baseline;gap:6px}
+.dn .dd b{font-family:var(--font-head);font-size:1.15rem}
+.dn .dd span{font-size:.78rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.dn .main{font-family:var(--font-head);font-size:1.3rem;font-weight:700;color:var(--accent);overflow-wrap:anywhere;min-height:1.6em}
+.dn .main.none{color:var(--muted);font-family:var(--font-body);font-size:.92rem;font-weight:600;font-style:italic}
+.dn .sides{font-size:.82rem;color:var(--muted);margin-top:-6px}
+.dn select{width:100%;font:inherit;font-size:.92rem;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+.dn .saved{font-size:.74rem;color:var(--muted);min-height:1em}
+
 /* ============================== KIDS */
 .kid-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .kid-hero .avatar{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;font-size:2rem;background:color-mix(in srgb,var(--accent) 16%,var(--card))}
@@ -371,7 +383,13 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <a class="btn heb" id="hebBtn" target="_blank" rel="noopener">🛒 Open HEB Shopping List</a>
     </div>
     <div class="card">
-      <h2>🍲 This week's meals <span class="sync" id="syncMeals"></span></h2>
+      <div class="cal-toolbar" style="margin-bottom:6px">
+        <h2 style="margin:0 auto 0 0">🍽️ Dinner plan</h2>
+        <span class="navgrp"><button class="btn ghost sm" id="dinPrev" aria-label="Previous week">←</button>
+        <button class="btn ghost sm" id="dinToday">This week</button>
+        <button class="btn ghost sm" id="dinNext" aria-label="Next week">→</button></span>
+      </div>
+      <p class="muted small" id="dinRange" style="margin:0 0 12px"></p>
       <div id="meals"><span class="spinner"></span></div>
     </div>
 
@@ -449,6 +467,10 @@ const CONFIG = {
     "u35k927b4ics7n9bi5matv2qjjj18lbl@import.calendar.google.com": { label: "Cedar Park HS", category: "Parent Square" },
     "dtn4m5pgtncgrevedb4n4ce95i064j0q@import.calendar.google.com": { label: "Cedar Park MS", category: "Parent Square" }
   },
+
+  /* Dinner plan: Google Sheet "Heilman Meal Plan" (in Steven's Grocery List folder).
+     Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
+  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan" },
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -736,13 +758,14 @@ function loadGis() {
   });
 }
 const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
 state.profile = store.get("profile", null);   // { name, email } of the Google account used on this device
-async function signIn({ switchAccount = false } = {}) {
+async function signIn({ switchAccount = false, consent = false } = {}) {
   await loadGis();
   if (!tokenClient) {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CONFIG.googleClientId,
-      scope: "openid email profile " + CAL_SCOPE,
+      scope: "openid email profile " + CAL_SCOPE + " " + SHEETS_SCOPE,
       callback: async r => {
         if (r.error) { setStatus("needs-signin", "Google sign-in didn't finish. Try again."); return; }
         if (!google.accounts.oauth2.hasGrantedAllScopes(r, CAL_SCOPE)) {
@@ -762,6 +785,7 @@ async function signIn({ switchAccount = false } = {}) {
   }
   const remembered = state.profile && state.profile.email;
   if (switchAccount) tokenClient.requestAccessToken({ prompt: "select_account" });
+  else if (consent) tokenClient.requestAccessToken(remembered ? { prompt: "consent", hint: remembered } : { prompt: "consent" });
   // The "hint" pre-selects the account this device used last, so the right Google account is chosen automatically.
   else tokenClient.requestAccessToken(remembered ? { prompt: "", hint: remembered } : { prompt: "select_account" });
 }
@@ -947,7 +971,7 @@ function syncLabel() {
   const f = state.failed.length ? ` · ⚠️ ${state.failed.length} source${state.failed.length > 1 ? "s" : ""} didn't load` : "";
   return `🔄 Updated ${fmtTime(state.lastSync)}${f}`;
 }
-function setSync() { ["#syncHome", "#syncWeek", "#syncCal", "#syncMeals"].forEach(s => { const el = $(s); if (el) el.textContent = syncLabel(); }); }
+function setSync() { ["#syncHome", "#syncWeek", "#syncCal"].forEach(s => { const el = $(s); if (el) el.textContent = syncLabel(); }); }
 
 /* ---------- Home ---------- */
 async function renderHome() {
@@ -1053,18 +1077,110 @@ async function renderMonth() {
        <div class="ev-list">${dayList.map(e => evButton(e, { day: selectedDay })).join("") || `<p class="empty">No events this day.</p>`}</div></div>` : "";
 }
 
-/* ---------- Meals (automated from calendar) ---------- */
-async function renderMeals() {
-  const blk = statusBlock();
-  if (blk) { $("#meals").innerHTML = blk; return; }
-  const ws = startOfWeek(new Date()), we = addDays(ws, 7);
-  const evs = remember(await eventsBetween(ws, we)).filter(e => /\b(breakfast|brunch|lunch|dinner|supper|meal)\b/i.test(e.title));
-  $("#meals").innerHTML = evs.length
-    ? [...Array(7)].map((_, i) => addDays(ws, i)).map(d => ({ d, l: evs.filter(e => sameDay(e.start, d)) })).filter(x => x.l.length)
-        .map(x => `<div class="daygroup"><h3>${fmt(x.d, { weekday: "long", month: "short", day: "numeric" })}${sameDay(x.d, new Date()) ? " · Today" : ""}</h3><div class="ev-list">${x.l.map(e => evButton(e)).join("")}</div></div>`).join("")
-    : `<p class="empty">No meals are on the calendar this week.</p>`;
-  $("#meals").insertAdjacentHTML("beforeend", `<p class="small muted" style="margin-top:12px">Meals show up here automatically. Add a Family Calendar event with "Breakfast", "Lunch" or "Dinner" in the title (for example, "Taco Dinner").</p>`);
+/* ---------- Dinner plan (Google Sheet: Meals list + Plan by date) ---------- */
+let dinWeek = null;
+const mondayOf = d => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
+const sheetErr = (msg, kind) => Object.assign(new Error(msg), { kind });
+async function sheetsApi(path, opts = {}) {
+  const r = await fetch("https://sheets.googleapis.com/v4/spreadsheets/" + CONFIG.mealSheet.id + path,
+    { ...opts, headers: { Authorization: "Bearer " + gToken.t, "Content-Type": "application/json" } });
+  if (r.status === 401) { gToken = null; store.set("gtoken", null); throw Object.assign(new Error("Sign-in expired"), { auth: true }); }
+  if (!r.ok) {
+    let j = {}; try { j = await r.json(); } catch {}
+    const m = (j.error && j.error.message) || "";
+    if (/insufficient|scope/i.test(m)) throw sheetErr(m, "scope");
+    if (/has not been used|is disabled|SERVICE_DISABLED/i.test(m + JSON.stringify(j))) throw sheetErr(m, "api");
+    if (r.status === 403 || r.status === 404) throw sheetErr(m, "access");
+    throw sheetErr(m || "Google Sheets error " + r.status, "other");
+  }
+  return r.json();
 }
+async function loadDinnerData() {
+  const t = CONFIG.mealSheet;
+  const q = "?ranges=" + encodeURIComponent(t.mealsTab + "!A2:B") + "&ranges=" + encodeURIComponent(t.planTab + "!A2:C");
+  const j = await sheetsApi("/values:batchGet" + q);
+  const [mealsV, planV] = (j.valueRanges || []).map(v => v.values || []);
+  const meals = (mealsV || []).filter(r => r[0] && String(r[0]).trim()).map(r => ({ main: String(r[0]).trim(), sides: String(r[1] || "").trim() }));
+  const plan = new Map();   // "YYYY-MM-DD" -> { meal, by, row }
+  (planV || []).forEach((r, i) => {
+    let k = String(r[0] || "").trim();
+    const m = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); if (m) k = `${m[3]}-${pad(m[1])}-${pad(m[2])}`;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(k)) plan.set(k, { meal: String(r[1] || "").trim(), by: String(r[2] || "").trim(), row: i + 2 });
+  });
+  return { meals, plan };
+}
+async function saveDinner(dateKey, meal) {
+  const t = CONFIG.mealSheet;
+  const { plan } = await loadDinnerData();        // re-read so we update the right row even if someone else just saved
+  const by = (state.profile && state.profile.name) || "";
+  const existing = plan.get(dateKey);
+  if (existing) {
+    await sheetsApi("/values/" + encodeURIComponent(`${t.planTab}!B${existing.row}:C${existing.row}`) + "?valueInputOption=RAW",
+      { method: "PUT", body: JSON.stringify({ values: [[meal, by]] }) });
+  } else if (meal) {
+    await sheetsApi("/values/" + encodeURIComponent(`${t.planTab}!A:C`) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+      { method: "POST", body: JSON.stringify({ values: [[dateKey, meal, by]] }) });
+  }
+}
+function dinnerNotice(e) {
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.mealSheet.id}/edit`;
+  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Dinner planning saves to the family's Google Sheet. Allow the site to use Google Sheets to see and pick dinners.
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="sheets-consent">✅ Allow dinner planning</button></div></div>`;
+  if (e.kind === "access") return `<div class="notice warn"><b>No access to the meal plan</b>This Google account can't open the "Heilman Meal Plan" sheet. Ask Steven to share it with you (as an editor).</div>`;
+  if (e.kind === "api") return `<div class="notice warn"><b>Google Sheets isn't turned on yet</b>In Google Cloud (project "Heilman Family"), search for <b>Google Sheets API</b> and click <b>Enable</b>.</div>`;
+  return `<div class="notice warn"><b>The dinner plan couldn't load</b>${esc(e.message)}<div class="row" style="margin-top:10px"><button class="btn sm" data-act="retry-meals">↻ Try again</button></div>
+    <p class="small"><a href="${sheetUrl}" target="_blank" rel="noopener">Open the meal plan sheet ↗</a></p></div>`;
+}
+async function renderMeals() {
+  if (!dinWeek) dinWeek = mondayOf(new Date());
+  const days = [...Array(7)].map((_, i) => addDays(dinWeek, i));
+  $("#dinRange").textContent = `Monday ${fmt(days[0], { month: "short", day: "numeric" })} – Sunday ${fmt(days[6], { month: "short", day: "numeric", year: "numeric" })}`;
+  const el = $("#meals");
+  if (MODE === "claude") { el.innerHTML = `<p class="empty">Dinner planning works on the family site (it saves to the family's Google Sheet), not in this preview.</p>`; return; }
+  if (!CONFIG.googleClientId) { el.innerHTML = statusBlock(); return; }
+  if (!tokenValid()) { el.innerHTML = `<div class="notice"><b>Sign in to see and plan dinners</b>Dinner picks are shared with the whole family through Google.
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="signin">🔐 Sign in with Google</button></div></div>`; return; }
+  if (!el.querySelector(".dinners")) el.innerHTML = `<p class="muted"><span class="spinner"></span> Loading the dinner plan…</p>`;
+  let data;
+  try { data = await loadDinnerData(); }
+  catch (e) { if (e.auth) throw e; el.innerHTML = dinnerNotice(e); return; }
+  const byMain = new Map(data.meals.map(m => [m.main.toLowerCase(), m]));
+  const today = new Date();
+  el.innerHTML = `<div class="dinners">${days.map(d => {
+    const k = ymd(d), p = data.plan.get(k), pick = p && p.meal ? p.meal : "";
+    const m = pick ? byMain.get(pick.toLowerCase()) : null;
+    const opts = data.meals.map(x => x.main);
+    if (pick && !byMain.has(pick.toLowerCase())) opts.push(pick);  // keep an old pick visible even if it was removed from the list
+    return `<div class="dn ${sameDay(d, today) ? "today" : ""}">
+      <div class="dd"><b>${fmt(d, { weekday: "long" })}</b><span>${fmt(d, { month: "short", day: "numeric" })}${sameDay(d, today) ? " · Tonight" : ""}</span></div>
+      <div class="main ${pick ? "" : "none"}">${pick ? esc(pick) : "Not planned yet"}</div>
+      ${m && m.sides ? `<div class="sides">with ${esc(m.sides)}</div>` : ""}
+      <select data-dinner="${k}" aria-label="Dinner for ${fmt(d, { weekday: "long", month: "long", day: "numeric" })}">
+        <option value="">— Not planned —</option>
+        ${opts.map(o => `<option value="${esc(o)}" ${o.toLowerCase() === pick.toLowerCase() ? "selected" : ""}>${esc(o)}</option>`).join("")}
+      </select>
+      <div class="saved">${p && p.meal && p.by ? "Picked by " + esc(p.by) : ""}</div></div>`;
+  }).join("")}</div>
+  ${data.meals.length ? "" : `<p class="notice" style="margin-top:12px">The go-to dinner list is empty. Add dinners to the <b>Meals</b> tab of the meal plan sheet.</p>`}
+  <p class="small muted" style="margin-top:12px">Change the go-to dinner list in the <a href="https://docs.google.com/spreadsheets/d/${CONFIG.mealSheet.id}/edit" target="_blank" rel="noopener">Heilman Meal Plan sheet ↗</a> (Meals tab: main dish, plus optional sides).</p>`;
+}
+document.addEventListener("change", async ev => {
+  const sel = ev.target.closest("select[data-dinner]"); if (!sel) return;
+  const card = sel.closest(".dn"), note = card.querySelector(".saved"), main = card.querySelector(".main");
+  sel.disabled = true; note.textContent = "Saving…";
+  try {
+    await saveDinner(sel.dataset.dinner, sel.value);
+    main.textContent = sel.value || "Not planned yet"; main.classList.toggle("none", !sel.value);
+    note.textContent = "✓ Saved for the whole family";
+    setTimeout(() => renderMeals().catch(() => {}), 1200);
+  } catch (e) {
+    if (e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again.");
+    note.textContent = "⚠️ Didn't save: " + (e.kind === "scope" ? "dinner planning permission needed" : e.kind === "access" ? "no access to the sheet" : e.message);
+  } finally { sel.disabled = false; }
+});
+$("#dinPrev").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()), -7); renderMeals(); };
+$("#dinNext").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()), 7); renderMeals(); };
+$("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); };
 
 /* ---------- Kids ---------- */
 function noSchoolSet() {
@@ -1207,6 +1323,8 @@ document.addEventListener("click", ev => {
   if (t.dataset.act === "retry") return boot();
   if (t.dataset.act === "switch") return signIn({ switchAccount: true }).catch(e => setStatus("error", e.message));
   if (t.dataset.act === "signout") return signOut();
+  if (t.dataset.act === "sheets-consent") return signIn({ consent: true }).catch(e => setStatus("error", e.message));
+  if (t.dataset.act === "retry-meals") return renderMeals();
   if (t.dataset.act === "showall" || t.dataset.act === "hideall") {
     state.hidden = new Set(t.dataset.act === "hideall" ? state.calendars.map(c => c.id) : []);
     store.set("hidden", [...state.hidden]); return renderMonth();
