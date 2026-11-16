@@ -248,6 +248,9 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 .embed.form{height:760px}
 .embed.sheet{height:clamp(420px,70vh,900px)}
 .embed.doc{height:clamp(520px,80vh,1400px)}
+#boardSlot .embed.doc{zoom:var(--bz,1.3);width:100%;height:calc(clamp(520px,80vh,1400px) / var(--bz,1.3))}
+.bz{display:inline-flex;gap:6px;align-items:center}
+.bz button{min-width:44px}
 .heb{background:#e31837}
 .heb:hover{background:#c9102c}
 
@@ -498,7 +501,9 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         <span class="sticky" style="--r:-1deg;background:#ffd6e7">You've got this 💪</span>
         <span class="sticky" style="--r:3deg;background:#cfe8ff">Trip ideas 🏖️</span>
       </div>
-      <div class="row" style="justify-content:center;margin:0 0 14px"><a class="btn" id="boardEditTop" target="_blank" rel="noopener">✏️ Write on the board</a></div>
+      <div class="row" style="justify-content:center;margin:0 0 14px"><a class="btn" id="boardEditTop" target="_blank" rel="noopener">✏️ Write on the board</a>
+        <span class="bz" aria-label="Text size"><button class="btn ghost sm" style="background:#fffbea" data-act="bz" data-d="-1" aria-label="Smaller text">A−</button>
+        <button class="btn ghost sm" style="background:#fffbea" data-act="bz" data-d="1" aria-label="Bigger text">A+</button></span></div>
       <div class="paper" id="boardSlot"></div>
       <p class="small" style="color:#fffbea;text-align:center;margin:16px 0 0">Write over old notes freely. No archive needed. New notes show up here within about 5–10 minutes.</p>
     </div>
@@ -1795,8 +1800,12 @@ async function kidChorePoints(id) {
 }
 
 /* ---------- Embeds (Groceries + Bulletin Board) ---------- */
+// Text size for the bulletin board (Google's published copy can't be restyled, so the whole board is zoomed). Saved per device.
+const BZ_STEPS = [1, 1.15, 1.3, 1.5, 1.75, 2];
+function applyBoardZoom() { const i = Math.min(BZ_STEPS.length - 1, Math.max(0, store.get("boardZoom", 2))); document.documentElement.style.setProperty("--bz", BZ_STEPS[i]); }
 function renderEmbeds() {
   $("#hebBtn").href = CONFIG.links.heb;
+  applyBoardZoom();
   const be = $("#boardEditTop");
   if (CONFIG.links.bulletinEdit) be.href = CONFIG.links.bulletinEdit; else be.parentElement.style.display = "none";
   const openLink = (url, label) => `<a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`;
@@ -2058,6 +2067,7 @@ document.addEventListener("click", ev => {
   const t = ev.target.closest("[data-ev],[data-day],[data-cat],[data-cal],[data-act]"); if (!t) return;
   if (t.dataset.ev) return openEvent(t.dataset.ev);
   if (t.dataset.act === "close") return closeModal();
+  if (t.dataset.act === "bz") { store.set("boardZoom", Math.min(BZ_STEPS.length - 1, Math.max(0, store.get("boardZoom", 2) + Number(t.dataset.d)))); return applyBoardZoom(); }
   if (t.dataset.act === "add-event") return openAddEvent();
   if (t.dataset.act === "add-chore") return openChoreEditor(null);
   if (t.dataset.act === "chore-edit") return openChoreEditor(t.closest("[data-chore]").dataset.chore);
