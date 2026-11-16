@@ -271,6 +271,7 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 .score .pts{font-family:var(--font-head);font-size:2.3rem;font-weight:700;line-height:1;color:color-mix(in srgb,var(--c) 80%,#000)}
 .score .pts small{font-family:var(--font-body);font-size:.9rem;font-weight:800;color:var(--muted);margin-left:4px}
 .score .lead{margin-left:auto;font-size:1.8rem}
+.score .runtot{margin-top:6px;font-size:.9rem;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-block;background:var(--card)}
 .chore-sec h3{font-size:1.15rem;margin:18px 0 10px;display:flex;gap:8px;align-items:center}
 .chores{display:grid;gap:10px}
 .chore{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--c,var(--accent))}
@@ -535,7 +536,8 @@ const CONFIG = {
      Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
   mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
                hiddenTab: "Hidden Events",
-               choresTab: "Chores", choreLogTab: "Chore Log" },   // chore list + who did what (tabs created automatically)   // events the family hid from the site (created automatically)
+               choresTab: "Chores", choreLogTab: "Chore Log",
+               pointsTab: "Points", adjustTab: "Point Adjustments" },   // running totals (formulas) + bonus/spent points   // chore list + who did what (tabs created automatically)   // events the family hid from the site (created automatically)
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -1274,6 +1276,8 @@ $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); 
 /* ---------- Chores (stored in the meal-plan Google Sheet) ----------
    Tab "Chores":    A Chore · B Points · C How often (Weekly / One-time) · D Active (blank or Yes = shown; No = retired)
    Tab "Chore Log": A Week (Monday) · B Chore · C Kid · D Status (claimed / done) · E Points · F Updated
+   Tab "Point Adjustments": A Date · B Kid · C Points (+ bonus / − spent) · D Note   (entered by parents in the sheet)
+   Tab "Points": formulas that total everything up: each kid's running total and points by week.
    Weekly chores can be done once per week; one-time chores disappear once done. */
 const STARTER_CHORES = [
   ["Take out the trash & recycling", 5, "Weekly"], ["Empty the dishwasher", 3, "Weekly"], ["Feed the pets", 2, "Weekly"],
@@ -1290,23 +1294,41 @@ async function ensureChoreTabs() {
   const t = CONFIG.mealSheet;
   const meta = await sheetsApi("?fields=sheets.properties.title");
   const have = new Set((meta.sheets || []).map(sh => sh.properties.title));
-  const add = [t.choresTab, t.choreLogTab].filter(n => !have.has(n));
+  const add = [t.choresTab, t.choreLogTab, t.adjustTab, t.pointsTab].filter(n => !have.has(n));
   if (add.length) {
     await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: add.map(title => ({ addSheet: { properties: { title } } })) }) });
     const data = [];
     if (add.includes(t.choresTab)) data.push({ range: tabRange(t.choresTab, "A1:D"), values: [["Chore", "Points", "How often (Weekly / One-time)", "Active (No = hide)"], ...STARTER_CHORES.map(c => [...c, "Yes"])] });
     if (add.includes(t.choreLogTab)) data.push({ range: tabRange(t.choreLogTab, "A1:F1"), values: [["Week (Monday)", "Chore", "Kid", "Status", "Points", "Updated"]] });
-    await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+    if (add.includes(t.adjustTab)) data.push({ range: tabRange(t.adjustTab, "A1:D1"), values: [["Date", "Kid", "Points (+ bonus / - spent)", "Note"]] });
+    if (data.length) await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+    if (add.includes(t.pointsTab)) {
+      const L = `'${t.choreLogTab}'`, A = `'${t.adjustTab}'`, kids = kidList();
+      const rows = kids.map((k, i) => {
+        const r = i + 2;
+        return [k.name, `=SUMIFS(${L}!E:E,${L}!C:C,A${r},${L}!D:D,"done")`, `=SUMIFS(${A}!C:C,${A}!B:B,A${r})`, `=B${r}+C${r}`];
+      });
+      const n = kids.length + 1;
+      await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "USER_ENTERED", data: [
+        { range: tabRange(t.pointsTab, `A1:D${n}`), values: [["Kid", "Earned from chores", "Bonus / spent", "Running total"], ...rows] },
+        { range: tabRange(t.pointsTab, `A${n + 2}:A${n + 3}`), values: [["Totals update by themselves from the Chore Log and Point Adjustments tabs."],
+          ["To give bonus points or record points spent, add a row to Point Adjustments (use a minus number for spent)."]] },
+        { range: tabRange(t.pointsTab, "F1"), values: [[`=IFERROR(QUERY(${L}!A2:E,"select A, sum(E) where D = 'done' group by A pivot C order by A desc label A 'Week of (Monday)'",0),"No chores done yet")`]] }
+      ] }) });
+    }
   }
   choreTabsOk = true;
 }
-const normDate = v => { const k = String(v || "").trim(); const m = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${pad(m[1])}-${pad(m[2])}` : k; };
+const normDate = v => { if (typeof v === "number") return ymd(new Date(Date.UTC(1899, 11, 30) + v * 864e5 + new Date().getTimezoneOffset() * 6e4)); const k = String(v || "").trim(); const m = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${pad(m[1])}-${pad(m[2])}` : k; };
 async function loadChoreData() {
   await ensureChoreTabs();
   const t = CONFIG.mealSheet;
-  const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:F"));
+  const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:F")) +
+    "&ranges=" + encodeURIComponent(tabRange(t.adjustTab, "A2:D")) + "&valueRenderOption=UNFORMATTED_VALUE";
   const j = await sheetsApi("/values:batchGet" + q);
-  const [cv, lv] = (j.valueRanges || []).map(v => v.values || []);
+  const [cv, lv, av] = (j.valueRanges || []).map(v => v.values || []);
+  const adjust = (av || []).filter(r => String(r[1] || "").trim() && Number(r[2]))
+    .map(r => ({ kid: String(r[1]).trim(), points: Number(r[2]), note: String(r[3] || "") }));
   const chores = (cv || []).filter(r => r[0] && String(r[0]).trim() && !/^(no|n|false)$/i.test(String(r[3] || "").trim()))
     .map(r => ({ name: String(r[0]).trim(), points: Math.max(0, Math.round(Number(r[1]) || 0)), once: /one|once|single/i.test(String(r[2] || "")) }));
   const log = [];
@@ -1314,7 +1336,15 @@ async function loadChoreData() {
     const name = String(r[1] || "").trim(); if (!name) return;
     log.push({ week: normDate(r[0]), name, kid: String(r[2] || "").trim(), status: String(r[3] || "").trim().toLowerCase(), points: Number(r[4]) || 0, row: i + 2 });
   });
-  return { chores, log };
+  return { chores, log, adjust };
+}
+// All-time running total per kid: every chore ever finished + bonus/spent points from the sheet.
+function runningTotals(log, adjust) {
+  const tot = {}; kidList().forEach(k => tot[k.name] = 0);
+  const add = (kid, p) => { const k = Object.keys(tot).find(n => n.toLowerCase() === kid.toLowerCase()) || kid; tot[k] = (tot[k] || 0) + p; };
+  log.filter(l => l.status === "done").forEach(l => add(l.kid, l.points));
+  (adjust || []).forEach(a => add(a.kid, a.points));
+  return tot;
 }
 // The log row that a chore's state lives in for the given week (one-time chores: any week).
 function choreEntry(log, chore, week) {
@@ -1366,10 +1396,11 @@ async function renderChores() {
   try { data = await loadChoreData(); }
   catch (e) { if (e.auth) throw e; el.innerHTML = choresNotice(e); return; }
   const kids = kidList(), kidColor = n => (kids.find(k => k.name === n) || {}).color || "#8a8a8a";
-  const tot = weekTotals(data.log, wk), best = Math.max(...Object.values(tot).map(t => t.pts));
+  const tot = weekTotals(data.log, wk), best = Math.max(...Object.values(tot).map(t => t.pts)), run = runningTotals(data.log, data.adjust);
   const scores = `<div class="scores">${kids.map(k => `<div class="score" style="--c:${k.color}"><span class="avatar">${k.emoji}</span>
       <div><b class="name">${esc(k.name)}</b><div class="pts">${tot[k.name].pts}<small>points</small></div>
-      <div class="small muted">${tot[k.name].n} chore${tot[k.name].n === 1 ? "" : "s"} done ${isNow ? "this week" : "that week"}</div></div>
+      <div class="small muted">${tot[k.name].n} chore${tot[k.name].n === 1 ? "" : "s"} done ${isNow ? "this week" : "that week"}</div>
+      <div class="runtot">🏦 Running total: <b>${run[k.name] || 0}</b> points</div></div>
       ${best > 0 && tot[k.name].pts === best ? `<span class="lead" title="Top score">🏆</span>` : ""}</div>`).join("")}</div>`;
   const tagsFor = c => `<span class="tag" style="--c:${c.once ? "#c2255c" : "#1f74c4"}">${c.once ? "⭐ One-time" : "🔁 Weekly"}</span>`;
   const badge = p => `<span class="ptsbadge">${p}<small>pts</small></span>`;
@@ -1402,7 +1433,8 @@ async function renderChores() {
   }
   el.innerHTML = `<div class="card">${scores}${body}<p class="small muted" style="margin-top:18px">Parents: change chores, points and how often in the
     <a href="https://docs.google.com/spreadsheets/d/${CONFIG.mealSheet.id}/edit" target="_blank" rel="noopener">family sheet's <b>Chores</b> tab ↗</a>
-    (type <b>No</b> in the Active column to retire a chore).</p></div><p class="small" id="chMsg" role="status"></p>`;
+    (type <b>No</b> in the Active column to retire a chore). Running totals are in the <b>Points</b> tab; to give bonus points or
+    record points spent, add a row to the <b>Point Adjustments</b> tab (use a minus number for spent).</p></div><p class="small" id="chMsg" role="status"></p>`;
 }
 async function choreAction(btn, kid, status) {
   const name = btn.closest("[data-chore]").dataset.chore, msg = $("#chMsg");
@@ -1487,7 +1519,7 @@ function renderKidStatic(id) {
       </div>
       <div class="card"><h2>🔗 School resources</h2><div class="links">${CONFIG.schoolResources.map(l =>
         `<a class="biglink" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="em">${l.emoji}</span>${esc(l.label)}</a>`).join("")}</div></div>
-      <div class="card"><h2>⭐ Chore points this week</h2><div class="kid-chores"><span class="spinner"></span></div>
+      <div class="card"><h2>⭐ Chore points</h2><div class="kid-chores"><span class="spinner"></span></div>
         <div class="row" style="margin-top:10px"><a class="btn sm" href="#chores">Pick a chore</a></div></div>
       <div class="card"><h2>🏫 Upcoming school events</h2><div class="kid-school">${statusBlock() || '<span class="spinner"></span>'}</div></div>
     </div>`;
@@ -1507,10 +1539,10 @@ async function kidChorePoints(id) {
   const el = $("#page-" + id + " .kid-chores"); if (!el) return;
   if (MODE === "claude" || !tokenValid()) { el.innerHTML = `<p class="empty">Sign in on the family site to see chore points.</p>`; return; }
   try {
-    const { log } = await loadChoreData(), wk = ymd(mondayOf(new Date())), name = CONFIG.kids[id].name;
-    const t = weekTotals(log, wk)[name] || { pts: 0, n: 0 };
+    const { log, adjust } = await loadChoreData(), wk = ymd(mondayOf(new Date())), name = CONFIG.kids[id].name;
+    const t = weekTotals(log, wk)[name] || { pts: 0, n: 0 }, run = runningTotals(log, adjust)[name] || 0;
     const doing = log.filter(l => l.week === wk && l.kid === name && l.status === "claimed").length;
-    el.innerHTML = `<div class="count" style="grid-template-columns:repeat(2,1fr)"><div><b>${t.pts}</b><small>points</small></div><div><b>${t.n}</b><small>chores done</small></div></div>
+    el.innerHTML = `<div class="count" style="grid-template-columns:repeat(3,1fr)"><div><b>${t.pts}</b><small>this week</small></div><div><b>${t.n}</b><small>chores done</small></div><div><b>${run}</b><small>running total</small></div></div>
       ${doing ? `<p class="small muted" style="margin:6px 0 0">⏳ ${doing} chore${doing > 1 ? "s" : ""} in progress</p>` : ""}`;
   } catch (e) { el.innerHTML = `<p class="empty">Chore points couldn't load.</p>`; }
 }
