@@ -44,12 +44,12 @@ header.top{
   backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
   border-bottom:1px solid var(--line);
 }
-.top .wrap{display:flex;align-items:center;gap:14px;min-height:62px;flex-wrap:wrap}
+.top .wrap{display:flex;align-items:center;gap:14px;min-height:68px;flex-wrap:wrap;padding-top:8px;padding-bottom:8px}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink);min-width:0}
-.brand .logo{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;
+.brand .logo{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
   background:var(--accent);color:#fff;font-size:20px;flex:none}
-.brand b{font-family:var(--font-head);font-size:1.12rem;white-space:nowrap}
-.brand small{display:block;color:var(--muted);font-size:.74rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.brand b{font-family:var(--font-head);font-size:1.3rem;white-space:nowrap;line-height:1.2}
+.brand b .pre{color:var(--accent)}
 nav.tabs{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
 nav.tabs a{
   text-decoration:none;color:var(--ink);font-weight:700;font-size:.92rem;
@@ -59,8 +59,9 @@ nav.tabs a:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 nav.tabs a[aria-current="page"]{background:var(--accent);color:#fff}
 .menu-btn{display:none;margin-left:auto;border:1px solid var(--line);background:var(--card);
   border-radius:999px;padding:8px 14px;font-weight:800;color:var(--ink);cursor:pointer}
+@media (max-width:420px){.brand b .pre{display:none}}
 @media (max-width:640px){.acct #acctInfo span:first-child{display:none}.top .wrap{min-height:54px;gap:8px}.brand .logo{width:32px;height:32px;font-size:17px}
-  .brand small{display:none}.brand b{font-size:1rem}.menu-btn{padding:7px 11px;font-size:.88rem}#menuLabel{max-width:34vw!important}}
+  .brand b{font-size:1.05rem}.top .wrap{padding-top:6px;padding-bottom:6px}.menu-btn{padding:7px 11px;font-size:.88rem}#menuLabel{max-width:34vw!important}}
 @media (max-width:1060px){
   nav.tabs.open{max-height:70vh;overflow:auto}
   .menu-btn{display:inline-flex;gap:8px;align-items:center}
@@ -337,7 +338,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   <div class="wrap">
     <a class="brand" href="#home" aria-label="Family Command Center home">
       <span class="logo" id="logoEmoji">🏡</span>
-      <span><small>Our Family</small><b>Command Center</b></span>
+      <b><span class="pre">Our Family</span> Command Center</b>
     </a>
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="tabs">☰ <span id="menuLabel">Menu</span></button>
     <nav class="tabs" id="tabs" aria-label="Sections">
@@ -521,6 +522,11 @@ const CONFIG = {
   /* Hosted site only: Google OAuth Client ID (Web application) that lets
      family members sign in and see the calendar. See SETUP.md. */
   googleClientId: "651488785696-ml9lqnrtvdl761nol7qi1711rss4hl59.apps.googleusercontent.com",
+
+  /* Hosted site only: the family Google accounts allowed to use the site. Anyone else who
+     signs in is asked to switch to their family account. (Google's test-user list and file
+     sharing are what actually protect the data; this just avoids confusing errors.) */
+  allowedAccounts: ["steven.heilman2.0@gmail.com", "tinarheilman@gmail.com", "graham.cv.heilman@gmail.com", "holden.p.heilman@gmail.com"],
 
   /* Friendly names + filter categories for the calendars already on the
      Google account. Calendars not listed here still appear, named by
@@ -857,11 +863,11 @@ async function signIn({ switchAccount = false, consent = false } = {}) {
         }
         gToken = { t: r.access_token, exp: Date.now() + (r.expires_in || 3600) * 1000, scope: r.scope || "" };
         store.set("gtoken", gToken); store.set("signedIn", true);
-        try {
-          const u = await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + gToken.t } })).json();
-          state.profile = { name: u.given_name || u.name || nameFromEmail(u.email), email: u.email || "" };
-          store.set("profile", state.profile);
-        } catch {}
+        let u = {};
+        try { u = await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + gToken.t } })).json(); } catch {}
+        if (!u.email || !isAllowed(u.email)) return rejectAccount(u.email);
+        state.profile = { name: u.given_name || u.name || nameFromEmail(u.email), email: u.email };
+        store.set("profile", state.profile);
         if (pendingAdd) { const d = pendingAdd; pendingAdd = null; boot().then(() => openAddEvent(d)); return; }
         boot();
       }
@@ -878,6 +884,16 @@ function signOut() {
   gToken = null; state.profile = null; state.account = "";
   store.set("gtoken", null); store.set("profile", null); store.set("signedIn", false);
   boot();
+}
+const isAllowed = email => !CONFIG.allowedAccounts || !CONFIG.allowedAccounts.length ||
+  CONFIG.allowedAccounts.some(a => a.toLowerCase() === String(email || "").trim().toLowerCase());
+function rejectAccount(email) {
+  try { if (gToken && window.google && google.accounts) google.accounts.oauth2.revoke(gToken.t, () => {}); } catch {}
+  gToken = null; state.profile = null; state.account = ""; pendingAdd = null;
+  store.set("gtoken", null); store.set("profile", null); store.set("signedIn", false);
+  setStatus("needs-signin", email
+    ? `You signed in as ${email}, which isn't one of the family accounts for this site. Please sign in with your personal family Google account (for example, your @gmail.com account).`
+    : "We couldn't confirm which Google account you used. Please sign in again with your family account.");
 }
 function nameFromEmail(e) {
   const w = String(e || "").split("@")[0].split(/[._\d-]/)[0];
@@ -1010,6 +1026,7 @@ async function boot() {
     } else {
       if (!CONFIG.googleClientId) return setStatus("needs-setup");
       if (!tokenValid()) return setStatus("needs-signin");
+      if (!state.profile || !isAllowed(state.profile.email)) return rejectAccount(state.profile && state.profile.email);
     }
     setStatus("loading", "Loading calendars…");
     state.calendars = await loadCalendars();
