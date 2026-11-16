@@ -383,6 +383,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         <button class="btn ghost sm" id="monToday">Today</button>
         <button class="btn ghost sm" id="monNext" aria-label="Next month">→</button></span>
         <button class="btn sm" data-act="add-event">➕ Add event</button>
+        <a class="btn ghost sm" id="openGcal" href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">📆 Open Google Calendar ↗</a>
       </div>
       <div id="calBody"><span class="spinner"></span></div>
       <div class="agenda" id="agenda"></div>
@@ -1073,6 +1074,7 @@ function renderFilters() {
 }
 async function renderMonth() {
   $("#monthTitle").textContent = fmt(monthCursor, { month: "long", year: "numeric" });
+  updateGcalLink();
   renderFilters();
   const blk = statusBlock();
   if (blk) {
@@ -1288,6 +1290,17 @@ function renderEmbeds() {
       <a class="btn ghost sm" href="${esc(plain(CONFIG.links.bulletinDoc))}" target="_blank" rel="noopener">Open full page ↗</a></div>`;
 }
 
+/* Links into the Google Calendar app, opened in the signed-in family account. */
+function gcalAccount() { return (state.profile && state.profile.email) || state.account || ""; }
+function withAuthUser(url) {
+  const a = gcalAccount(); if (!a || !url) return url;
+  try { const u = new URL(url); u.searchParams.set("authuser", a); return u.toString(); } catch { return url; }
+}
+function updateGcalLink() {
+  const el = $("#openGcal"); if (!el) return;
+  el.href = withAuthUser(`https://calendar.google.com/calendar/r/month/${monthCursor.getFullYear()}/${monthCursor.getMonth() + 1}/1`);
+}
+
 /* =====================================================================
    ADD EVENT (writes to the Google Family calendar)
    ===================================================================== */
@@ -1406,6 +1419,7 @@ function openEvent(key) {
     <div class="meta"><div><span>🕒</span><span>${esc(when)}</span></div>
     ${e.location ? `<div><span>📍</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" rel="noopener">${esc(e.location)}</a></span></div>` : ""}</div>
     ${e.description ? `<div class="desc">${linkify(e.description)}</div>` : ""}
+    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(withAuthUser(e.link))}" target="_blank" rel="noopener">${e.cal.category === "Family Events" ? "✏️ Edit or delete in Google Calendar ↗" : "📆 Open in Google Calendar ↗"}</a></div>` : ""}
     `;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
