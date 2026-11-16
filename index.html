@@ -544,9 +544,13 @@ const CONFIG = {
   /* Dinner plan: the family meal-plan Google Sheet.
      Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
   mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
-               hiddenTab: "Hidden Events",
-               choresTab: "Chores", choreLogTab: "Chore Log",
-               pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },   // + each kid's chosen avatar   // running totals (formulas) + bonus/spent points   // chore list + who did what (tabs created automatically)   // events the family hid from the site (created automatically)
+               hiddenTab: "Hidden Events" },   // events the family hid from the site (created automatically)
+
+  /* Chores: the "Heilman Chores" Google Sheet in the Family Hub folder.
+     Chores = chore list · Chore Log = who did what · Points = running totals (formulas)
+     Point Adjustments = bonus/spent points · Avatars = each kid's chosen avatar */
+  choresSheet: { id: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", choresTab: "Chores", choreLogTab: "Chore Log",
+                 pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -1181,8 +1185,8 @@ async function renderMonth() {
 let dinWeek = null;
 const mondayOf = d => addDays(startOfDay(d), -((d.getDay() + 6) % 7));
 const sheetErr = (msg, kind) => Object.assign(new Error(msg), { kind });
-async function sheetsApi(path, opts = {}) {
-  const r = await fetch("https://sheets.googleapis.com/v4/spreadsheets/" + CONFIG.mealSheet.id + path,
+async function sheetsApi(path, opts = {}, sheetId = CONFIG.mealSheet.id) {
+  const r = await fetch("https://sheets.googleapis.com/v4/spreadsheets/" + sheetId + path,
     { ...opts, headers: { Authorization: "Bearer " + gToken.t, "Content-Type": "application/json" } });
   if (r.status === 401) { gToken = null; store.set("gtoken", null); throw Object.assign(new Error("Sign-in expired"), { auth: true }); }
   if (!r.ok) {
@@ -1288,6 +1292,7 @@ $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); 
    Tab "Point Adjustments": A Date · B Kid · C Points (+ bonus / − spent) · D Note   (entered by parents in the sheet)
    Tab "Points": formulas that total everything up: each kid's running total and points by week.
    Weekly chores can be done once per week; one-time chores disappear once done. */
+const choresApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.choresSheet.id);
 /* ---------- Avatars: each kid picks an emoji or uploads a picture (saved in the Avatars tab) ---------- */
 const AVATAR_CHOICES = ["🦉","🦊","🐻","🐼","🐯","🦁","🐸","🐵","🐶","🐱","🐺","🦈","🐙","🦖","🐉","🦄","🐧","🦅",
   "🚀","🛸","🤖","👾","🎮","⚽","🏀","🏈","⚾","🎸","🎨","🛹","🏆","⚡","🔥","🌟","🌈","🍕","🌮","🍩","🥷","🧙","🦸","😎"];
@@ -1315,12 +1320,12 @@ function shrinkImage(file) {   // center-crop to a small square JPEG so it fits 
 }
 async function saveAvatar(name, emoji, pic) {
   await ensureChoreTabs();
-  const t = CONFIG.mealSheet;
-  const j = await sheetsApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A2:A")));
+  const t = CONFIG.choresSheet;
+  const j = await choresApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A2:A")));
   const idx = (j.values || []).findIndex(r => String(r[0] || "").trim().toLowerCase() === name.toLowerCase());
   const row = [name, emoji || "", pic || ""];
-  if (idx >= 0) await sheetsApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, `A${idx + 2}:C${idx + 2}`)) + "?valueInputOption=RAW", { method: "PUT", body: JSON.stringify({ values: [row] }) });
-  else await sheetsApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A:C")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", { method: "POST", body: JSON.stringify({ values: [row] }) });
+  if (idx >= 0) await choresApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, `A${idx + 2}:C${idx + 2}`)) + "?valueInputOption=RAW", { method: "PUT", body: JSON.stringify({ values: [row] }) });
+  else await choresApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A:C")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", { method: "POST", body: JSON.stringify({ values: [row] }) });
   (state.avatars = state.avatars || {})[name.toLowerCase()] = { emoji: emoji || "", pic: pic || "" };
 }
 function openAvatarPicker(name) {
@@ -1365,18 +1370,18 @@ const tabRange = (tab, cols) => `'${tab}'!${cols}`;
 let choreWeek = null, choreTabsOk = false;
 async function ensureChoreTabs() {
   if (choreTabsOk) return;
-  const t = CONFIG.mealSheet;
-  const meta = await sheetsApi("?fields=sheets.properties.title");
+  const t = CONFIG.choresSheet;
+  const meta = await choresApi("?fields=sheets.properties.title");
   const have = new Set((meta.sheets || []).map(sh => sh.properties.title));
   const add = [t.choresTab, t.choreLogTab, t.adjustTab, t.pointsTab, t.avatarTab].filter(n => !have.has(n));
   if (add.length) {
-    await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: add.map(title => ({ addSheet: { properties: { title } } })) }) });
+    await choresApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: add.map(title => ({ addSheet: { properties: { title } } })) }) });
     const data = [];
     if (add.includes(t.choresTab)) data.push({ range: tabRange(t.choresTab, "A1:D"), values: [["Chore", "Points", "How often (Weekly / One-time)", "Active (No = hide)"], ...STARTER_CHORES.map(c => [...c, "Yes"])] });
     if (add.includes(t.choreLogTab)) data.push({ range: tabRange(t.choreLogTab, "A1:F1"), values: [["Week (Monday)", "Chore", "Kid", "Status", "Points", "Updated"]] });
     if (add.includes(t.avatarTab)) data.push({ range: tabRange(t.avatarTab, "A1:C1"), values: [["Kid", "Emoji", "Picture (set from the website)"]] });
     if (add.includes(t.adjustTab)) data.push({ range: tabRange(t.adjustTab, "A1:D1"), values: [["Date", "Kid", "Points (+ bonus / - spent)", "Note"]] });
-    if (data.length) await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+    if (data.length) await choresApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
     if (add.includes(t.pointsTab)) {
       const L = `'${t.choreLogTab}'`, A = `'${t.adjustTab}'`, kids = kidList();
       const rows = kids.map((k, i) => {
@@ -1384,7 +1389,7 @@ async function ensureChoreTabs() {
         return [k.name, `=SUMIFS(${L}!E:E,${L}!C:C,A${r},${L}!D:D,"done")`, `=SUMIFS(${A}!C:C,${A}!B:B,A${r})`, `=B${r}+C${r}`];
       });
       const n = kids.length + 1;
-      await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "USER_ENTERED", data: [
+      await choresApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "USER_ENTERED", data: [
         { range: tabRange(t.pointsTab, `A1:D${n}`), values: [["Kid", "Earned from chores", "Bonus / spent", "Running total"], ...rows] },
         { range: tabRange(t.pointsTab, `A${n + 2}:A${n + 3}`), values: [["Totals update by themselves from the Chore Log and Point Adjustments tabs."],
           ["To give bonus points or record points spent, add a row to Point Adjustments (use a minus number for spent)."]] },
@@ -1397,10 +1402,10 @@ async function ensureChoreTabs() {
 const normDate = v => { if (typeof v === "number") return ymd(new Date(Date.UTC(1899, 11, 30) + v * 864e5 + new Date().getTimezoneOffset() * 6e4)); const k = String(v || "").trim(); const m = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${pad(m[1])}-${pad(m[2])}` : k; };
 async function loadChoreData() {
   await ensureChoreTabs();
-  const t = CONFIG.mealSheet;
+  const t = CONFIG.choresSheet;
   const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:F")) +
     "&ranges=" + encodeURIComponent(tabRange(t.adjustTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.avatarTab, "A2:C")) + "&valueRenderOption=UNFORMATTED_VALUE";
-  const j = await sheetsApi("/values:batchGet" + q);
+  const j = await choresApi("/values:batchGet" + q);
   const [cv, lv, av, pv] = (j.valueRanges || []).map(v => v.values || []);
   state.avatars = {};
   (pv || []).forEach((r, i) => { const n = String(r[0] || "").trim(); if (n) state.avatars[n.toLowerCase()] = { emoji: String(r[1] || "").trim(), pic: String(r[2] || "").trim(), row: i + 2 }; });
@@ -1429,7 +1434,7 @@ function choreEntry(log, chore, week) {
   return chore.once ? (log.find(l => same(l) && l.status === "done") || log.find(l => same(l) && l.week === week)) : log.find(l => same(l) && l.week === week);
 }
 async function setChore(choreName, kid, status) {
-  const t = CONFIG.mealSheet, week = ymd(mondayOf(new Date()));
+  const t = CONFIG.choresSheet, week = ymd(mondayOf(new Date()));
   const { chores, log } = await loadChoreData();           // re-read so two people tapping at once don't clash
   const chore = chores.find(c => c.name.toLowerCase() === choreName.toLowerCase()) || { name: choreName, points: 0, once: false };
   const cur = choreEntry(log, chore, week);
@@ -1437,19 +1442,19 @@ async function setChore(choreName, kid, status) {
   if (cur && cur.status === "done" && cur.week !== week) throw new Error("This one-time chore was already done.");
   const now = new Date().toLocaleString("en-US", { timeZone: CONFIG.timeZone });
   if (!status) {
-    if (cur) await sheetsApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)] }) });
+    if (cur) await choresApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)] }) });
     return;
   }
   const row = [week, chore.name, kid || (cur && cur.kid) || "", status, chore.points, now];
-  if (cur) await sheetsApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)) + "?valueInputOption=RAW",
+  if (cur) await choresApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)) + "?valueInputOption=USER_ENTERED",
     { method: "PUT", body: JSON.stringify({ values: [row] }) });
-  else await sheetsApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, "A:F")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+  else await choresApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, "A:F")) + ":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",
     { method: "POST", body: JSON.stringify({ values: [row] }) });
 }
 function choresNotice(e) {
-  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Chores are saved in the family's Google Sheet. Allow the site to use Google Sheets.
+  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Chores are saved in the Heilman Chores Google Sheet. Allow the site to use Google Sheets.
     <div class="row" style="margin-top:10px"><button class="btn sm" data-act="sheets-consent">✅ Allow</button></div></div>`;
-  if (e.kind === "access") return `<div class="notice warn"><b>No access to the chore list</b>Chores live in the family meal-plan Google Sheet. Ask a parent to share it with this Google account (as an editor).</div>`;
+  if (e.kind === "access") return `<div class="notice warn"><b>No access to the chore list</b>Chores live in the Heilman Chores Google Sheet. Ask a parent to share it with this Google account (as an editor).</div>`;
   if (e.kind === "api") return `<div class="notice warn"><b>Google Sheets isn't turned on yet</b>In your Google Cloud project, search for <b>Google Sheets API</b> and click <b>Enable</b>.</div>`;
   return `<div class="notice warn"><b>Chores couldn't load</b>${esc(e.message)}<div class="row" style="margin-top:10px"><button class="btn sm" data-act="retry-chores">↻ Try again</button></div></div>`;
 }
@@ -1509,7 +1514,7 @@ async function renderChores() {
       }).join("") || `<p class="empty">No chores were finished that week.</p>`}</div></div>`;
   }
   el.innerHTML = `<div class="card">${scores}${body}<p class="small muted" style="margin-top:18px">Parents: change chores, points and how often in the
-    <a href="https://docs.google.com/spreadsheets/d/${CONFIG.mealSheet.id}/edit" target="_blank" rel="noopener">family sheet's <b>Chores</b> tab ↗</a>
+    <a href="https://docs.google.com/spreadsheets/d/${CONFIG.choresSheet.id}/edit" target="_blank" rel="noopener"><b>Heilman Chores</b> sheet ↗</a>
     (type <b>No</b> in the Active column to retire a chore). Running totals are in the <b>Points</b> tab; to give bonus points or
     record points spent, add a row to the <b>Point Adjustments</b> tab (use a minus number for spent).</p></div><p class="small" id="chMsg" role="status"></p>`;
 }
@@ -1544,7 +1549,7 @@ function openAddChore() {
     try {
       const { chores } = await loadChoreData();
       if (chores.some(c => c.name.toLowerCase() === name.toLowerCase())) throw new Error("That chore is already on the list.");
-      await sheetsApi("/values/" + encodeURIComponent(tabRange(CONFIG.mealSheet.choresTab, "A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+      await choresApi("/values/" + encodeURIComponent(tabRange(CONFIG.choresSheet.choresTab, "A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
         { method: "POST", body: JSON.stringify({ values: [[name, pts, f.often.value, "Yes"]] }) });
       closeModal(); choreWeek = mondayOf(new Date()); renderChores();
     } catch (e) { err.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message); b.disabled = false; b.textContent = "➕ Add chore"; }
