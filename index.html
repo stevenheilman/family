@@ -271,6 +271,15 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 .score .pts{font-family:var(--font-head);font-size:2.3rem;font-weight:700;line-height:1;color:color-mix(in srgb,var(--c) 80%,#000)}
 .score .pts small{font-family:var(--font-body);font-size:.9rem;font-weight:800;color:var(--muted);margin-left:4px}
 .score .lead{margin-left:auto;font-size:1.8rem}
+.avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block}
+.avbtn{position:relative;border:0;cursor:pointer;padding:0;font:inherit;overflow:visible}
+.avbtn img{border-radius:inherit}
+.avedit{position:absolute;right:-6px;bottom:-6px;font-size:.8rem;background:var(--card);border:1px solid var(--line);border-radius:999px;width:24px;height:24px;display:grid;place-items:center;box-shadow:var(--shadow)}
+.avpick-now{display:flex;align-items:center;gap:12px;margin:8px 0 12px}
+.avatar.big{width:64px;height:64px;border-radius:18px;display:grid;place-items:center;font-size:2.2rem;overflow:hidden;background:color-mix(in srgb,var(--accent) 14%,var(--card))}
+.avgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(48px,1fr));gap:8px}
+.avopt{font-size:1.7rem;height:52px;border-radius:14px;border:1px solid var(--line);background:var(--card);cursor:pointer}
+.avopt:hover{background:color-mix(in srgb,var(--accent) 14%,var(--card));transform:scale(1.06)}
 .score .runtot{margin-top:6px;font-size:.9rem;font-weight:700;padding:4px 10px;border-radius:999px;display:inline-block;background:var(--card)}
 .chore-sec h3{font-size:1.15rem;margin:18px 0 10px;display:flex;gap:8px;align-items:center}
 .chores{display:grid;gap:10px}
@@ -537,7 +546,7 @@ const CONFIG = {
   mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
                hiddenTab: "Hidden Events",
                choresTab: "Chores", choreLogTab: "Chore Log",
-               pointsTab: "Points", adjustTab: "Point Adjustments" },   // running totals (formulas) + bonus/spent points   // chore list + who did what (tabs created automatically)   // events the family hid from the site (created automatically)
+               pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },   // + each kid's chosen avatar   // running totals (formulas) + bonus/spent points   // chore list + who did what (tabs created automatically)   // events the family hid from the site (created automatically)
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -1279,6 +1288,71 @@ $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); 
    Tab "Point Adjustments": A Date · B Kid · C Points (+ bonus / − spent) · D Note   (entered by parents in the sheet)
    Tab "Points": formulas that total everything up: each kid's running total and points by week.
    Weekly chores can be done once per week; one-time chores disappear once done. */
+/* ---------- Avatars: each kid picks an emoji or uploads a picture (saved in the Avatars tab) ---------- */
+const AVATAR_CHOICES = ["🦉","🦊","🐻","🐼","🐯","🦁","🐸","🐵","🐶","🐱","🐺","🦈","🐙","🦖","🐉","🦄","🐧","🦅",
+  "🚀","🛸","🤖","👾","🎮","⚽","🏀","🏈","⚾","🎸","🎨","🛹","🏆","⚡","🔥","🌟","🌈","🍕","🌮","🍩","🥷","🧙","🦸","😎"];
+function avatarOf(name) {
+  const k = Object.values(CONFIG.kids).find(x => x.name === name) || { emoji: "🙂" };
+  const a = (state.avatars || {})[String(name).toLowerCase()];
+  return a && a.pic ? { pic: a.pic } : { emoji: (a && a.emoji) || k.emoji };
+}
+const avatarInner = name => { const a = avatarOf(name); return a.pic ? `<img src="${esc(a.pic)}" alt="">` : esc(a.emoji); };
+function shrinkImage(file) {   // center-crop to a small square JPEG so it fits in one sheet cell
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const S = 160, c = document.createElement("canvas"); c.width = c.height = S;
+      const side = Math.min(img.width, img.height);
+      c.getContext("2d").drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, S, S);
+      URL.revokeObjectURL(url);
+      let q = .82, out = c.toDataURL("image/jpeg", q);
+      while (out.length > 45000 && q > .3) { q -= .12; out = c.toDataURL("image/jpeg", q); }
+      out.length > 45000 ? rej(new Error("That picture is too detailed. Try a different one.")) : res(out);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("That file isn't a picture we can use.")); };
+    img.src = url;
+  });
+}
+async function saveAvatar(name, emoji, pic) {
+  await ensureChoreTabs();
+  const t = CONFIG.mealSheet;
+  const j = await sheetsApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A2:A")));
+  const idx = (j.values || []).findIndex(r => String(r[0] || "").trim().toLowerCase() === name.toLowerCase());
+  const row = [name, emoji || "", pic || ""];
+  if (idx >= 0) await sheetsApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, `A${idx + 2}:C${idx + 2}`)) + "?valueInputOption=RAW", { method: "PUT", body: JSON.stringify({ values: [row] }) });
+  else await sheetsApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A:C")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", { method: "POST", body: JSON.stringify({ values: [row] }) });
+  (state.avatars = state.avatars || {})[name.toLowerCase()] = { emoji: emoji || "", pic: pic || "" };
+}
+function openAvatarPicker(name) {
+  if (MODE === "claude" || !tokenValid()) return addEventNotice("Choose an avatar", "Sign in on the family site to change avatars.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
+  const m = $("#modal"); m.style.setProperty("--c", "var(--accent)");
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
+    <h3 id="mTitle">Choose ${esc(name)}'s avatar</h3>
+    <div class="avpick-now"><span class="avatar big">${avatarInner(name)}</span><span class="small muted">Tap an emoji, or upload a picture.</span></div>
+    <div class="avgrid">${AVATAR_CHOICES.map(e => `<button type="button" class="avopt" data-emoji="${e}" aria-label="${e}">${e}</button>`).join("")}</div>
+    <div class="row" style="margin-top:14px">
+      <label class="btn ghost sm" style="cursor:pointer">📷 Upload a picture<input type="file" accept="image/*" hidden></label>
+      <button type="button" class="btn ghost sm" data-avreset>↺ Back to ${esc((Object.values(CONFIG.kids).find(k => k.name === name) || {}).emoji || "default")}</button>
+      <span class="small muted avmsg" role="status"></span></div>`;
+  const msg = m.querySelector(".avmsg");
+  const save = async (emoji, pic) => {
+    msg.textContent = "Saving…"; m.querySelectorAll("button,input").forEach(b => b.disabled = true);
+    try { await saveAvatar(name, emoji, pic); closeModal(); renderCurrent(); }
+    catch (e) {
+      if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
+      msg.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message);
+      m.querySelectorAll("button,input").forEach(b => b.disabled = false);
+    }
+  };
+  m.querySelectorAll(".avopt").forEach(b => b.onclick = () => save(b.dataset.emoji, ""));
+  m.querySelector("[data-avreset]").onclick = () => save("", "");
+  m.querySelector("input[type=file]").onchange = async ev => {
+    const f = ev.target.files[0]; if (!f) return;
+    try { save("", await shrinkImage(f)); } catch (e) { msg.textContent = "⚠️ " + e.message; }
+  };
+  $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
+}
+
 const STARTER_CHORES = [
   ["Take out the trash & recycling", 5, "Weekly"], ["Empty the dishwasher", 3, "Weekly"], ["Feed the pets", 2, "Weekly"],
   ["Vacuum the living room", 5, "Weekly"], ["Clean your bathroom sink & mirror", 4, "Weekly"], ["Fold & put away laundry", 4, "Weekly"],
@@ -1294,12 +1368,13 @@ async function ensureChoreTabs() {
   const t = CONFIG.mealSheet;
   const meta = await sheetsApi("?fields=sheets.properties.title");
   const have = new Set((meta.sheets || []).map(sh => sh.properties.title));
-  const add = [t.choresTab, t.choreLogTab, t.adjustTab, t.pointsTab].filter(n => !have.has(n));
+  const add = [t.choresTab, t.choreLogTab, t.adjustTab, t.pointsTab, t.avatarTab].filter(n => !have.has(n));
   if (add.length) {
     await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: add.map(title => ({ addSheet: { properties: { title } } })) }) });
     const data = [];
     if (add.includes(t.choresTab)) data.push({ range: tabRange(t.choresTab, "A1:D"), values: [["Chore", "Points", "How often (Weekly / One-time)", "Active (No = hide)"], ...STARTER_CHORES.map(c => [...c, "Yes"])] });
     if (add.includes(t.choreLogTab)) data.push({ range: tabRange(t.choreLogTab, "A1:F1"), values: [["Week (Monday)", "Chore", "Kid", "Status", "Points", "Updated"]] });
+    if (add.includes(t.avatarTab)) data.push({ range: tabRange(t.avatarTab, "A1:C1"), values: [["Kid", "Emoji", "Picture (set from the website)"]] });
     if (add.includes(t.adjustTab)) data.push({ range: tabRange(t.adjustTab, "A1:D1"), values: [["Date", "Kid", "Points (+ bonus / - spent)", "Note"]] });
     if (data.length) await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
     if (add.includes(t.pointsTab)) {
@@ -1324,9 +1399,11 @@ async function loadChoreData() {
   await ensureChoreTabs();
   const t = CONFIG.mealSheet;
   const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:F")) +
-    "&ranges=" + encodeURIComponent(tabRange(t.adjustTab, "A2:D")) + "&valueRenderOption=UNFORMATTED_VALUE";
+    "&ranges=" + encodeURIComponent(tabRange(t.adjustTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.avatarTab, "A2:C")) + "&valueRenderOption=UNFORMATTED_VALUE";
   const j = await sheetsApi("/values:batchGet" + q);
-  const [cv, lv, av] = (j.valueRanges || []).map(v => v.values || []);
+  const [cv, lv, av, pv] = (j.valueRanges || []).map(v => v.values || []);
+  state.avatars = {};
+  (pv || []).forEach((r, i) => { const n = String(r[0] || "").trim(); if (n) state.avatars[n.toLowerCase()] = { emoji: String(r[1] || "").trim(), pic: String(r[2] || "").trim(), row: i + 2 }; });
   const adjust = (av || []).filter(r => String(r[1] || "").trim() && Number(r[2]))
     .map(r => ({ kid: String(r[1]).trim(), points: Number(r[2]), note: String(r[3] || "") }));
   const chores = (cv || []).filter(r => r[0] && String(r[0]).trim() && !/^(no|n|false)$/i.test(String(r[3] || "").trim()))
@@ -1397,7 +1474,7 @@ async function renderChores() {
   catch (e) { if (e.auth) throw e; el.innerHTML = choresNotice(e); return; }
   const kids = kidList(), kidColor = n => (kids.find(k => k.name === n) || {}).color || "#8a8a8a";
   const tot = weekTotals(data.log, wk), best = Math.max(...Object.values(tot).map(t => t.pts)), run = runningTotals(data.log, data.adjust);
-  const scores = `<div class="scores">${kids.map(k => `<div class="score" style="--c:${k.color}"><span class="avatar">${k.emoji}</span>
+  const scores = `<div class="scores">${kids.map(k => `<div class="score" style="--c:${k.color}"><button class="avatar avbtn" data-act="pick-avatar" data-kid="${esc(k.name)}" title="Change ${esc(k.name)}'s avatar">${avatarInner(k.name)}<span class="avedit">✏️</span></button>
       <div><b class="name">${esc(k.name)}</b><div class="pts">${tot[k.name].pts}<small>points</small></div>
       <div class="small muted">${tot[k.name].n} chore${tot[k.name].n === 1 ? "" : "s"} done ${isNow ? "this week" : "that week"}</div>
       <div class="runtot">🏦 Running total: <b>${run[k.name] || 0}</b> points</div></div>
@@ -1509,7 +1586,7 @@ function renderKidStatic(id) {
     ? `<div class="links">${k.classroomLinks.map(l => `<a class="biglink" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="em">📘</span>${esc(l.label)}</a>`).join("")}</div>`
     : `<p class="empty">No class links have been added for ${esc(k.name)} yet.</p>`;
   $("#page-" + id).innerHTML = `
-    <div class="page-head"><div class="kid-hero"><span class="avatar">${k.emoji}</span><div><h1>${esc(k.name)}</h1><p>School at a glance</p></div></div></div>
+    <div class="page-head"><div class="kid-hero"><button class="avatar avbtn" data-act="pick-avatar" data-kid="${esc(k.name)}" title="Change ${esc(k.name)}'s avatar">${avatarInner(k.name)}<span class="avedit">✏️</span></button><div><h1>${esc(k.name)}</h1><p>School at a glance</p></div></div></div>
     <div class="grid">
       <div class="card"><h2>⏳ Grading period countdown</h2>${gradingCard()}</div>
       <div class="card"><h2>🎓 Google Classroom</h2>
@@ -1539,7 +1616,9 @@ async function kidChorePoints(id) {
   const el = $("#page-" + id + " .kid-chores"); if (!el) return;
   if (MODE === "claude" || !tokenValid()) { el.innerHTML = `<p class="empty">Sign in on the family site to see chore points.</p>`; return; }
   try {
-    const { log, adjust } = await loadChoreData(), wk = ymd(mondayOf(new Date())), name = CONFIG.kids[id].name;
+    const { log, adjust } = await loadChoreData();
+    const av = $("#page-" + id + " .kid-hero .avatar"); if (av) av.innerHTML = avatarInner(CONFIG.kids[id].name) + `<span class="avedit">✏️</span>`;
+    const wk = ymd(mondayOf(new Date())), name = CONFIG.kids[id].name;
     const t = weekTotals(log, wk)[name] || { pts: 0, n: 0 }, run = runningTotals(log, adjust)[name] || 0;
     const doing = log.filter(l => l.week === wk && l.kid === name && l.status === "claimed").length;
     el.innerHTML = `<div class="count" style="grid-template-columns:repeat(3,1fr)"><div><b>${t.pts}</b><small>this week</small></div><div><b>${t.n}</b><small>chores done</small></div><div><b>${run}</b><small>running total</small></div></div>
@@ -1811,6 +1890,7 @@ document.addEventListener("click", ev => {
   if (t.dataset.act === "close") return closeModal();
   if (t.dataset.act === "add-event") return openAddEvent();
   if (t.dataset.act === "add-chore") return openAddChore();
+  if (t.dataset.act === "pick-avatar") return openAvatarPicker(t.dataset.kid);
   if (t.dataset.act === "chore-claim") return choreAction(t, t.dataset.kid, "claimed");
   if (t.dataset.act === "chore-done") return choreAction(t, "", "done");
   if (t.dataset.act === "chore-undo") return choreAction(t, "", "claimed");
