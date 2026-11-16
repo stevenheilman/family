@@ -148,6 +148,8 @@ section.page.active{display:block;animation:fade .25s ease}
   background:color-mix(in srgb,var(--c,#999) 7%,var(--card));border-left:4px solid var(--c,#999);
   text-align:left;width:100%;border-top:0;border-right:0;border-bottom:0;color:inherit;font:inherit}
 .ev:hover{background:color-mix(in srgb,var(--c,#999) 14%,var(--card))}
+.ev.hid,.pill.hid{opacity:.5}
+.ev.hid .what b,.pill.hid{text-decoration:line-through}
 .ev .when{flex:0 0 76px;font-weight:800;font-size:.84rem;color:var(--muted);padding-top:1px}
 .ev .what{min-width:0;flex:1}
 .ev .what b{display:block;overflow-wrap:anywhere}
@@ -383,6 +385,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         <button class="btn ghost sm" id="monToday">Today</button>
         <button class="btn ghost sm" id="monNext" aria-label="Next month">→</button></span>
         <button class="btn sm" data-act="add-event">➕ Add event</button>
+        <a class="btn ghost sm" id="openGcal" href="https://calendar.google.com/calendar/r" target="_blank" rel="noopener">📆 Open Google Calendar ↗</a>
       </div>
       <div id="calBody"><span class="spinner"></span></div>
       <div class="agenda" id="agenda"></div>
@@ -484,7 +487,8 @@ const CONFIG = {
 
   /* Dinner plan: the family meal-plan Google Sheet.
      Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
-  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan" },
+  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
+               hiddenTab: "Hidden Events" },   // events the family hid from the site (created automatically)
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -711,6 +715,8 @@ const state = {
   account: "",                // signed-in Google account (used so links open in the right account)
   months: new Map(),          // "YYYY-MM" -> Promise<events[]>
   hidden: new Set(store.get("hidden", [])),
+  hiddenEv: new Map(),        // shared list of hidden events: key -> { title, when, by, row }
+  showHiddenEv: store.get("showHiddenEv", false),
   lastSync: null,
   failed: []
 };
@@ -868,7 +874,7 @@ function normalize(raw, cal) {
   const start = allDay ? parseYMD(raw.start.date) : new Date(raw.start.dateTime);
   let end = raw.end ? (raw.end.date ? parseYMD(raw.end.date) : new Date(raw.end.dateTime)) : null;
   if (!end || end <= start) end = allDay ? addDays(start, 1) : new Date(start.getTime() + 1);
-  return { key: cal.id + "|" + raw.id, id: raw.id, cal, title: raw.summary || "(No title)", start, end, allDay,
+  return { key: cal.id + "|" + raw.id, id: raw.id, series: raw.recurringEventId ? cal.id + "|" + raw.recurringEventId : "", cal, title: raw.summary || "(No title)", start, end, allDay,
            location: raw.location || "", description: cleanDesc(raw.description), link: raw.htmlLink || "" };
 }
 function setStatus(s, msg = "") { state.status = s; state.statusMsg = msg; renderAll(); }
@@ -918,7 +924,8 @@ async function eventsBetween(start, end, { includeHidden = false } = {}) {
   lists.flat().forEach(e => {
     const k = e.key + "|" + e.start.getTime();
     if (seen.has(k)) return; seen.add(k);
-    if (e.start < end && e.end > start && (includeHidden || !state.hidden.has(e.cal.id))) out.push(e);
+    e.hiddenEv = isEventHidden(e);
+    if (e.start < end && e.end > start && (includeHidden || (!state.hidden.has(e.cal.id) && (!e.hiddenEv || state.showHiddenEv)))) out.push(e);
   });
   return out.sort((a, b) => (b.allDay - a.allDay) || (a.start - b.start) || a.title.localeCompare(b.title));
 }
@@ -946,6 +953,7 @@ async function boot() {
     state.calendars = await loadCalendars();
     renderAccount();
     if (!state.calendars.length) return setStatus("error", "No calendars were found on this Google account.");
+    if (MODE === "google") await loadHiddenEvents();
     state.status = "ready"; renderAll();
   } catch (e) {
     if (e && e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar.");
@@ -978,7 +986,7 @@ function evButton(e, { showDate = false, day = null } = {}) {
   else when = fmtTime(e.start);
   if (showDate) when = fmt(e.start, { weekday: "short" }) + " " + when;
   const sub = [e.cal.label, e.location && e.location.split(",")[0]].filter(Boolean).join(" · ");
-  return `<button class="ev" style="--c:${colorOf(e)}" data-ev="${esc(e.key)}|${e.start.getTime()}">
+  return `<button class="ev${e.hiddenEv ? " hid" : ""}" style="--c:${colorOf(e)}" data-ev="${esc(e.key)}|${e.start.getTime()}">
     <span class="when">${esc(when)}</span><span class="what"><b>${esc(e.title)}</b><span>${esc(sub)}</span></span></button>`;
 }
 const evIndex = new Map();
@@ -1069,10 +1077,14 @@ function renderFilters() {
       <span class="small muted">Tap calendars to show or hide them everywhere on the site${hiddenCount ? ` · <b>${hiddenCount} hidden</b>` : ""}</span>
       <span class="row"><button class="btn ghost sm" data-act="showall">Show all</button><button class="btn ghost sm" data-act="hideall">Hide all</button></span></div>
     ${cats.map(g => `<div class="fgroup"><div class="fglabel">${CAT_EMOJI[g] || ""} ${esc(g === "Family Events" ? "Family" : g === "Personal Events" ? "Personal" : g)}</div>
-      <div class="chips">${state.calendars.filter(c => c.category === g).map(srcChip).join("")}</div></div>`).join("")}`;
+      <div class="chips">${state.calendars.filter(c => c.category === g).map(srcChip).join("")}</div></div>`).join("")}
+    ${state.hiddenEv.size ? `<div class="row" style="justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)">
+      <span class="small muted">🙈 <b>${state.hiddenEv.size} event${state.hiddenEv.size > 1 ? "s" : ""}</b> hidden by the family (from school, team and other linked calendars)</span>
+      <button class="btn ghost sm" data-act="toggle-hidden-ev">${state.showHiddenEv ? "Stop showing hidden events" : "Show hidden events"}</button></div>` : ""}`;
 }
 async function renderMonth() {
   $("#monthTitle").textContent = fmt(monthCursor, { month: "long", year: "numeric" });
+  updateGcalLink();
   renderFilters();
   const blk = statusBlock();
   if (blk) {
@@ -1095,7 +1107,7 @@ async function renderMonth() {
     const list = onDay(evs, d), out = d.getMonth() !== monthCursor.getMonth();
     html += `<button class="mcell ${out ? "out" : ""} ${sameDay(d, today) ? "today" : ""} ${sameDay(d, selectedDay) ? "sel" : ""}" data-day="${ymd(d)}" aria-label="${fmt(d, { weekday: "long", month: "long", day: "numeric" })}, ${list.length} events">
       <span class="num">${d.getDate()}</span>
-      ${list.slice(0, 3).map(e => `<span class="pill" style="--c:${colorOf(e)}">${e.allDay || !sameDay(e.start, d) ? "" : esc(fmtTime(e.start)) + " "}${esc(e.title)}</span>`).join("")}
+      ${list.slice(0, 3).map(e => `<span class="pill${e.hiddenEv ? " hid" : ""}" style="--c:${colorOf(e)}">${e.allDay || !sameDay(e.start, d) ? "" : esc(fmtTime(e.start)) + " "}${esc(e.title)}</span>`).join("")}
       ${list.length > 3 ? `<span class="more">+${list.length - 3} more</span>` : ""}
       <span class="dots">${list.slice(0, 5).map(e => `<i class="dot" style="--c:${colorOf(e)}"></i>`).join("")}</span></button>`;
   }
@@ -1289,6 +1301,79 @@ function renderEmbeds() {
 }
 
 /* =====================================================================
+   HIDDEN EVENTS: the family can hide events from linked calendars (school,
+   Parent Square, teams...). The list is shared through the "Hidden Events"
+   tab of the meal-plan Google Sheet; Google Calendar itself is not changed.
+   Columns: A key · B event · C date · D hidden by.  A key is either
+   "<calendarId>|<eventId>" (one event) or "series:<calendarId>|<seriesId>" (all repeats).
+   ===================================================================== */
+function isEventHidden(e) {
+  return state.hiddenEv.has(e.key) || (!!e.series && state.hiddenEv.has("series:" + e.series));
+}
+const hiddenRange = cols => `'${CONFIG.mealSheet.hiddenTab}'!${cols}`;
+async function readHiddenRows() {
+  try {
+    const j = await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A2:D")));
+    const m = new Map();
+    (j.values || []).forEach((r, i) => { const k = String(r[0] || "").trim(); if (k) m.set(k, { title: r[1] || "", when: r[2] || "", by: r[3] || "", row: i + 2 }); });
+    return m;
+  } catch (e) {
+    if (/unable to parse range/i.test(e.message || "")) return new Map();   // tab doesn't exist yet
+    throw e;
+  }
+}
+async function loadHiddenEvents() {
+  try { state.hiddenEv = await readHiddenRows(); }
+  catch (e) { if (e.auth) throw e; console.warn("Hidden events list couldn't load:", e.message); }
+}
+async function ensureHiddenTab() {
+  const meta = await sheetsApi("?fields=sheets.properties.title");
+  if ((meta.sheets || []).some(sh => sh.properties.title === CONFIG.mealSheet.hiddenTab)) return;
+  await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CONFIG.mealSheet.hiddenTab } } }] }) });
+  await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A1:D1")) + "?valueInputOption=RAW",
+    { method: "PUT", body: JSON.stringify({ values: [["Key (used by the website)", "Event", "Date", "Hidden by"]] }) });
+}
+async function hideEvent(e, wholeSeries) {
+  await ensureHiddenTab();
+  const key = wholeSeries ? "series:" + e.series : e.key;
+  const current = await readHiddenRows();
+  if (!current.has(key)) {
+    const by = (state.profile && state.profile.name) || "";
+    await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+      { method: "POST", body: JSON.stringify({ values: [[key, e.title + (wholeSeries ? " (all repeats)" : ""), wholeSeries ? "every time" : ymd(e.start), by]] }) });
+  }
+  state.hiddenEv = await readHiddenRows();
+}
+async function unhideEvent(e) {
+  const current = await readHiddenRows();
+  const ranges = [e.key, e.series ? "series:" + e.series : ""].filter(k => k && current.has(k)).map(k => hiddenRange(`A${current.get(k).row}:D${current.get(k).row}`));
+  if (ranges.length) await sheetsApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges }) });
+  state.hiddenEv = await readHiddenRows();
+}
+async function runHide(btn, fn) {
+  const key = $("#modal").dataset.ev, e = evIndex.get(key); if (!e) return;
+  const note = $("#modal .hidenote"); btn.disabled = true; note.textContent = "Saving…";
+  try { await fn(e); closeModal(); renderAll(); }
+  catch (err) {
+    if (err.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
+    btn.disabled = false;
+    note.textContent = "⚠️ Couldn't save: " + (err.kind === "scope" ? "the site needs permission to use Google Sheets (sign out and back in)." :
+      err.kind === "access" ? "this Google account can't edit the family meal-plan sheet, which stores the hidden list." : err.message);
+  }
+}
+
+/* Links into the Google Calendar app, opened in the signed-in family account. */
+function gcalAccount() { return (state.profile && state.profile.email) || state.account || ""; }
+function withAuthUser(url) {
+  const a = gcalAccount(); if (!a || !url) return url;
+  try { const u = new URL(url); u.searchParams.set("authuser", a); return u.toString(); } catch { return url; }
+}
+function updateGcalLink() {
+  const el = $("#openGcal"); if (!el) return;
+  el.href = withAuthUser(`https://calendar.google.com/calendar/r/month/${monthCursor.getFullYear()}/${monthCursor.getMonth() + 1}/1`);
+}
+
+/* =====================================================================
    ADD EVENT (writes to the Google Family calendar)
    ===================================================================== */
 let pendingAdd = null;   // form values to restore after a permission prompt
@@ -1399,13 +1484,21 @@ function openEvent(key) {
     : sameDay(e.start, e.end) || e.end - e.start < 1000
       ? `${fmt(e.start, { weekday: "long", month: "long", day: "numeric" })} · ${fmtTime(e.start)} – ${fmtTime(e.end)}`
       : `${fmt(e.start, { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(e.start)} – ${fmt(e.end, { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(e.end)}`;
-  const m = $("#modal"); m.style.setProperty("--c", colorOf(e));
+  const m = $("#modal"); m.style.setProperty("--c", colorOf(e)); m.dataset.ev = key;
+  const canHide = MODE === "google" && e.cal.category !== "Family Events" && e.cal.category !== "Personal Events";
+  const hidRow = !canHide ? "" : e.hiddenEv
+    ? `<div class="row" style="margin-top:10px"><span class="small muted">🙈 Hidden from the family site.</span><button class="btn ghost sm" data-act="unhide-ev">👁️ Show this event again</button><span class="small muted hidenote"></span></div>`
+    : `<div class="row" style="margin-top:10px"><button class="btn ghost sm" data-act="hide-ev">🙈 Hide this event</button>
+       ${e.series ? `<button class="btn ghost sm" data-act="hide-series">🙈 Hide all repeats</button>` : ""}<span class="small muted hidenote"></span></div>
+       <p class="small muted" style="margin:6px 0 0">Hides it on the family site for everyone. ${esc(e.cal.label)} and Google Calendar aren't changed.</p>`;
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
     <span class="tag" style="--c:${colorOf(e)}">${CAT_EMOJI[e.cal.category] || ""} ${esc(e.cal.category)} · ${esc(e.cal.label)}</span>
     <h3 id="mTitle" style="margin-top:10px">${esc(e.title)}</h3>
     <div class="meta"><div><span>🕒</span><span>${esc(when)}</span></div>
     ${e.location ? `<div><span>📍</span><span><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(e.location)}" target="_blank" rel="noopener">${esc(e.location)}</a></span></div>` : ""}</div>
     ${e.description ? `<div class="desc">${linkify(e.description)}</div>` : ""}
+    ${e.link ? `<div class="row" style="margin-top:14px"><a class="btn sm" href="${esc(withAuthUser(e.link))}" target="_blank" rel="noopener">${e.cal.category === "Family Events" ? "✏️ Edit or delete in Google Calendar ↗" : "📆 Open in Google Calendar ↗"}</a></div>` : ""}
+    ${hidRow}
     `;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
@@ -1448,6 +1541,10 @@ document.addEventListener("click", ev => {
   if (t.dataset.ev) return openEvent(t.dataset.ev);
   if (t.dataset.act === "close") return closeModal();
   if (t.dataset.act === "add-event") return openAddEvent();
+  if (t.dataset.act === "hide-ev") return runHide(t, e => hideEvent(e, false));
+  if (t.dataset.act === "hide-series") return runHide(t, e => hideEvent(e, true));
+  if (t.dataset.act === "unhide-ev") return runHide(t, unhideEvent);
+  if (t.dataset.act === "toggle-hidden-ev") { state.showHiddenEv = !state.showHiddenEv; store.set("showHiddenEv", state.showHiddenEv); return renderAll(); }
   if (t.dataset.act === "add-on-day") return openAddEvent({ date: t.dataset.date });
   if (t.dataset.act === "cal-consent") return signIn({ consent: true }).catch(e => setStatus("error", e.message));
   if (t.dataset.act === "signin") return signIn().catch(e => setStatus("error", e.message));
