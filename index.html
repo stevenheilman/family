@@ -555,6 +555,7 @@ const CONFIG = {
   /* Chores: the "Heilman Chores" Google Sheet in the Family Hub folder.
      Chores = chore list · Chore Log = who did what · Points = running totals (formulas)
      Point Adjustments = bonus/spent points · Avatars = each kid's chosen avatar */
+  choreAdmins: ["steven.heilman2.0@gmail.com", "tinarheilman@gmail.com"],   // who can add, edit and remove chores on the site
   choresSheet: { id: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", choresTab: "Chores", choreLogTab: "Chore Log",
                  pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },
 
@@ -1305,10 +1306,11 @@ $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); 
 
 /* ---------- Chores (stored in the meal-plan Google Sheet) ----------
    Tab "Chores":    A Chore · B Points · C How often (Weekly / One-time) · D Active (blank or Yes = shown; No = retired)
-   Tab "Chore Log": A Week (Monday) · B Chore · C Kid · D Status (claimed / done) · E Points · F Updated
+   Tab "Chores" column C (How often): Daily / Weekly / One-time
+   Tab "Chore Log": A Week (Monday) · B Chore · C Kid · D Status (claimed / done) · E Points · F Updated · G Day
    Tab "Point Adjustments": A Date · B Kid · C Points (+ bonus / − spent) · D Note   (entered by parents in the sheet)
    Tab "Points": formulas that total everything up: each kid's running total and points by week.
-   Weekly chores can be done once per week; one-time chores disappear once done. */
+   Daily chores can be done once per day, weekly chores once per week; one-time chores disappear once done. */
 const choresApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.choresSheet.id);
 /* ---------- Avatars: each kid picks an emoji or uploads a picture (saved in the Avatars tab) ---------- */
 const AVATAR_CHOICES = ["🦉","🦊","🐻","🐼","🐯","🦁","🐸","🐵","🐶","🐱","🐺","🦈","🐙","🦖","🐉","🦄","🐧","🦅",
@@ -1376,7 +1378,7 @@ function openAvatarPicker(name) {
 }
 
 const STARTER_CHORES = [
-  ["Take out the trash & recycling", 5, "Weekly"], ["Empty the dishwasher", 3, "Weekly"], ["Feed the pets", 2, "Weekly"],
+  ["Take out the trash & recycling", 5, "Weekly"], ["Empty the dishwasher", 3, "Weekly"], ["Feed the pets (evening)", 2, "Daily"],
   ["Vacuum the living room", 5, "Weekly"], ["Clean your bathroom sink & mirror", 4, "Weekly"], ["Fold & put away laundry", 4, "Weekly"],
   ["Set & clear the dinner table", 2, "Weekly"], ["Wipe down kitchen counters", 2, "Weekly"],
   ["Help put up holiday decorations", 15, "One-time"], ["Rake the leaves", 10, "One-time"], ["Wash the car", 10, "One-time"]
@@ -1395,7 +1397,7 @@ async function ensureChoreTabs() {
     await choresApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: add.map(title => ({ addSheet: { properties: { title } } })) }) });
     const data = [];
     if (add.includes(t.choresTab)) data.push({ range: tabRange(t.choresTab, "A1:D"), values: [["Chore", "Points", "How often (Weekly / One-time)", "Active (No = hide)"], ...STARTER_CHORES.map(c => [...c, "Yes"])] });
-    if (add.includes(t.choreLogTab)) data.push({ range: tabRange(t.choreLogTab, "A1:F1"), values: [["Week (Monday)", "Chore", "Kid", "Status", "Points", "Updated"]] });
+    if (add.includes(t.choreLogTab)) data.push({ range: tabRange(t.choreLogTab, "A1:G1"), values: [["Week (Monday)", "Chore", "Kid", "Status", "Points", "Updated", "Day"]] });
     if (add.includes(t.avatarTab)) data.push({ range: tabRange(t.avatarTab, "A1:C1"), values: [["Kid", "Emoji", "Picture (set from the website)"]] });
     if (add.includes(t.adjustTab)) data.push({ range: tabRange(t.adjustTab, "A1:D1"), values: [["Date", "Kid", "Points (+ bonus / - spent)", "Note"]] });
     if (data.length) await choresApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
@@ -1420,7 +1422,7 @@ const normDate = v => { if (typeof v === "number") return ymd(new Date(Date.UTC(
 async function loadChoreData() {
   await ensureChoreTabs();
   const t = CONFIG.choresSheet;
-  const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:F")) +
+  const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:G")) +
     "&ranges=" + encodeURIComponent(tabRange(t.adjustTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.avatarTab, "A2:C")) + "&valueRenderOption=UNFORMATTED_VALUE";
   const j = await choresApi("/values:batchGet" + q);
   const [cv, lv, av, pv] = (j.valueRanges || []).map(v => v.values || []);
@@ -1428,14 +1430,21 @@ async function loadChoreData() {
   (pv || []).forEach((r, i) => { const n = String(r[0] || "").trim(); if (n) state.avatars[n.toLowerCase()] = { emoji: String(r[1] || "").trim(), pic: String(r[2] || "").trim(), row: i + 2 }; });
   const adjust = (av || []).filter(r => String(r[1] || "").trim() && Number(r[2]))
     .map(r => ({ kid: String(r[1]).trim(), points: Number(r[2]), note: String(r[3] || "") }));
-  const chores = (cv || []).filter(r => r[0] && String(r[0]).trim() && !/^(no|n|false)$/i.test(String(r[3] || "").trim()))
-    .map(r => ({ name: String(r[0]).trim(), points: Math.max(0, Math.round(Number(r[1]) || 0)), once: /one|once|single/i.test(String(r[2] || "")) }));
+  const chores = [], retired = [];
+  (cv || []).forEach((r, i) => {
+    const name = String(r[0] || "").trim(); if (!name) return;
+    const f = String(r[2] || ""), freq = /day|daily/i.test(f) ? "daily" : /one|once|single/i.test(f) ? "once" : "weekly";
+    const c = { name, points: Math.max(0, Math.round(Number(r[1]) || 0)), freq, once: freq === "once", daily: freq === "daily",
+                active: !/^(no|n|false)$/i.test(String(r[3] || "").trim()), row: i + 2 };
+    (c.active ? chores : retired).push(c);
+  });
   const log = [];
   (lv || []).forEach((r, i) => {
     const name = String(r[1] || "").trim(); if (!name) return;
-    log.push({ week: normDate(r[0]), name, kid: String(r[2] || "").trim(), status: String(r[3] || "").trim().toLowerCase(), points: Number(r[4]) || 0, row: i + 2 });
+    log.push({ week: normDate(r[0]), name, kid: String(r[2] || "").trim(), status: String(r[3] || "").trim().toLowerCase(), points: Number(r[4]) || 0,
+               day: r[6] ? normDate(r[6]) : "", row: i + 2 });
   });
-  return { chores, log, adjust };
+  return { chores, retired, log, adjust };
 }
 // All-time running total per kid: every chore ever finished + bonus/spent points from the sheet.
 function runningTotals(log, adjust) {
@@ -1445,28 +1454,37 @@ function runningTotals(log, adjust) {
   (adjust || []).forEach(a => add(a.kid, a.points));
   return tot;
 }
-// The log row that a chore's state lives in for the given week (one-time chores: any week).
-function choreEntry(log, chore, week) {
+// The log row that a chore's state lives in: today's (daily), this week's (weekly), or any week once done (one-time).
+function choreEntry(log, chore, week, day) {
   const same = l => l.name.toLowerCase() === chore.name.toLowerCase();
+  if (chore.daily) return log.find(l => same(l) && l.day === day);
   return chore.once ? (log.find(l => same(l) && l.status === "done") || log.find(l => same(l) && l.week === week)) : log.find(l => same(l) && l.week === week);
 }
+const isChoreAdmin = () => !!(state.profile && (CONFIG.choreAdmins || []).some(a => a.toLowerCase() === String(state.profile.email || "").toLowerCase()));
 async function setChore(choreName, kid, status) {
-  const t = CONFIG.choresSheet, week = ymd(mondayOf(new Date()));
+  const t = CONFIG.choresSheet, week = ymd(mondayOf(new Date())), day = ymd(new Date());
   const { chores, log } = await loadChoreData();           // re-read so two people tapping at once don't clash
   const chore = chores.find(c => c.name.toLowerCase() === choreName.toLowerCase()) || { name: choreName, points: 0, once: false };
-  const cur = choreEntry(log, chore, week);
+  const cur = choreEntry(log, chore, week, day);
   if (cur && cur.status && kid && cur.kid && cur.kid !== kid) throw new Error(`${cur.kid} already picked this one.`);
   if (cur && cur.status === "done" && cur.week !== week) throw new Error("This one-time chore was already done.");
   const now = new Date().toLocaleString("en-US", { timeZone: CONFIG.timeZone });
   if (!status) {
-    if (cur) await choresApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)] }) });
+    if (cur) await choresApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(t.choreLogTab, `A${cur.row}:G${cur.row}`)] }) });
     return;
   }
-  const row = [week, chore.name, kid || (cur && cur.kid) || "", status, chore.points, now];
-  if (cur) await choresApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)) + "?valueInputOption=USER_ENTERED",
+  const row = [week, chore.name, kid || (cur && cur.kid) || "", status, chore.points, now, day];
+  if (cur) await choresApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, `A${cur.row}:G${cur.row}`)) + "?valueInputOption=USER_ENTERED",
     { method: "PUT", body: JSON.stringify({ values: [row] }) });
-  else await choresApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, "A:F")) + ":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",
+  else await choresApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, "A:G")) + ":append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS",
     { method: "POST", body: JSON.stringify({ values: [row] }) });
+}
+async function undoChoreRow(row, name) {
+  const t = CONFIG.choresSheet;
+  const { log } = await loadChoreData();
+  const e = log.find(l => l.row === row);
+  if (!e || e.name.toLowerCase() !== name.toLowerCase()) throw new Error("That chore changed in the meantime. Try again.");
+  await choresApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(t.choreLogTab, `A${row}:G${row}`)] }) });
 }
 function choresNotice(e) {
   if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Chores are saved in the Heilman Chores Google Sheet. Allow the site to use Google Sheets.
@@ -1501,77 +1519,134 @@ async function renderChores() {
       <div class="small muted">${tot[k.name].n} chore${tot[k.name].n === 1 ? "" : "s"} done ${isNow ? "this week" : "that week"}</div>
       <div class="runtot">🏦 Running total: <b>${run[k.name] || 0}</b> points</div></div>
       ${best > 0 && tot[k.name].pts === best ? `<span class="lead" title="Top score">🏆</span>` : ""}</div>`).join("")}</div>`;
-  const tagsFor = c => `<span class="tag" style="--c:${c.once ? "#c2255c" : "#1f74c4"}">${c.once ? "⭐ One-time" : "🔁 Weekly"}</span>`;
+  const admin = isChoreAdmin(), today = ymd(new Date());
+  document.querySelectorAll('#page-chores [data-act="add-chore"]').forEach(b => b.style.display = admin ? "" : "none");
+  const tagsFor = c => c.daily ? `<span class="tag" style="--c:#2f8a52">📅 Daily</span>` : `<span class="tag" style="--c:${c.once ? "#c2255c" : "#1f74c4"}">${c.once ? "⭐ One-time" : "🔁 Weekly"}</span>`;
+  const editBtn = admin ? `<button class="btn ghost sm" data-act="chore-edit" title="Change this chore">✏️</button>` : "";
   const badge = p => `<span class="ptsbadge">${p}<small>pts</small></span>`;
-  const row = (c, cls, color, extra, acts) => `<div class="chore ${cls}" style="--c:${color}" data-chore="${esc(c.name)}">${badge(c.points)}
+  const row = (c, cls, color, extra, acts, logRow) => `<div class="chore ${cls}" style="--c:${color}" data-chore="${esc(c.name)}"${logRow ? ` data-row="${logRow}"` : ""}>${badge(c.points)}
       <div class="info"><b>${esc(c.name)}</b><div class="tags">${tagsFor(c)}${extra}</div></div><div class="acts">${acts}</div></div>`;
   let body;
   if (isNow) {
-    const open = [], doing = [], done = [];
+    const open = [], doing = [];
     data.chores.forEach(c => {
-      const e = choreEntry(data.log, c, wk);
+      const e = choreEntry(data.log, c, wk, today);
       if (!e || !e.status) open.push(c);
-      else if (e.status === "done") { if (e.week === wk) done.push([c, e]); }   // one-time chores done in earlier weeks are gone
-      else doing.push([c, e]);
+      else if (e.status !== "done") doing.push([c, e]);   // done chores (and one-time chores finished earlier) drop off the list
     });
+    const findChore = n => data.chores.find(x => x.name.toLowerCase() === n.toLowerCase()) || data.retired.find(x => x.name.toLowerCase() === n.toLowerCase()) || { name: n, freq: "weekly" };
+    const done = data.log.filter(l => l.week === wk && l.status === "done").sort((a, b) => (b.day || "").localeCompare(a.day || ""));
+    const dayTag = l => l.day && findChore(l.name).daily ? `<span class="tag" style="--c:#8a8a8a">${l.day === today ? "Today" : fmt(parseYMD(l.day), { weekday: "short" })}</span>` : "";
     const kidBtns = c => kids.map(k => `<button class="kidbtn" style="--c:${k.color}" data-act="chore-claim" data-kid="${esc(k.name)}">🙋 ${esc(k.name)}</button>`).join("");
     body = `<div class="chore-sec"><h3>🙋 Up for grabs <span class="tag" style="--c:var(--accent)">${open.length}</span></h3>
-      <div class="chores">${open.map(c => row(c, "", "var(--accent)", "", kidBtns(c))).join("") || `<p class="empty">Every chore is taken. Way to go! 🎉</p>`}</div></div>
+      <div class="chores">${open.map(c => row(c, "", "var(--accent)", "", kidBtns(c) + editBtn)).join("") || `<p class="empty">Every chore is taken. Way to go! 🎉</p>`}</div></div>
       ${doing.length ? `<div class="chore-sec"><h3>⏳ In progress</h3><div class="chores">${doing.map(([c, e]) => row(c, "", kidColor(e.kid),
         `<span class="tag" style="--c:${kidColor(e.kid)}">${esc(e.kid)} is on it</span>`,
-        `<button class="btn sm" data-act="chore-done">✅ Done!</button><button class="btn ghost sm" data-act="chore-drop">Put it back</button>`)).join("")}</div></div>` : ""}
-      <div class="chore-sec"><h3>✅ Done this week</h3><div class="chores">${done.map(([c, e]) => row({ ...c, points: e.points }, "done", kidColor(e.kid),
-        `<span class="tag" style="--c:${kidColor(e.kid)}">✓ ${esc(e.kid)}</span>`, `<button class="btn ghost sm" data-act="chore-undo">Undo</button>`)).join("")
-        || `<p class="empty">Nothing finished yet this week.</p>`}</div></div>`;
+        `<button class="btn sm" data-act="chore-done">✅ Done!</button><button class="btn ghost sm" data-act="chore-drop">Put it back</button>` + editBtn)).join("")}</div></div>` : ""}
+      <div class="chore-sec"><h3>✅ Done this week</h3><div class="chores">${done.map(l => row({ ...findChore(l.name), name: l.name, points: l.points }, "done", kidColor(l.kid),
+        `<span class="tag" style="--c:${kidColor(l.kid)}">✓ ${esc(l.kid)}</span>${dayTag(l)}`, `<button class="btn ghost sm" data-act="chore-undo">Undo</button>`, l.row)).join("")
+        || `<p class="empty">Nothing finished yet this week.</p>`}</div></div>
+      ${admin && data.retired.length ? `<details class="chore-sec" style="margin-top:14px"><summary class="small muted" style="cursor:pointer;font-weight:800">🗄️ Retired chores (${data.retired.length})</summary>
+        <div class="chores" style="margin-top:10px">${data.retired.map(c => row(c, "done", "#8a8a8a", `<span class="tag" style="--c:#8a8a8a">Retired</span>`, editBtn)).join("")}</div></details>` : ""}`;
   } else {
     const done = data.log.filter(l => l.week === wk && l.status === "done");
     body = `<div class="chore-sec"><h3>✅ Done that week</h3><div class="chores">${done.map(l => {
-        const c = data.chores.find(x => x.name.toLowerCase() === l.name.toLowerCase()) || { name: l.name, once: false };
+        const c = data.chores.find(x => x.name.toLowerCase() === l.name.toLowerCase()) || data.retired.find(x => x.name.toLowerCase() === l.name.toLowerCase()) || { name: l.name, once: false };
         return row({ ...c, points: l.points }, "done", kidColor(l.kid), `<span class="tag" style="--c:${kidColor(l.kid)}">✓ ${esc(l.kid)}</span>`, "");
       }).join("") || `<p class="empty">No chores were finished that week.</p>`}</div></div>`;
   }
-  el.innerHTML = `<div class="card">${scores}${body}<p class="small muted" style="margin-top:18px">Parents: change chores, points and how often in the
+  el.innerHTML = `<div class="card">${scores}${body}<p class="small muted" style="margin-top:18px">📅 Daily chores reset every morning, 🔁 weekly chores every Monday.
+    ${admin ? `Parents: tap ✏️ on a chore to change its name, points or how often, or to retire it. ` : ""}Running totals live in the
     <a href="https://docs.google.com/spreadsheets/d/${CONFIG.choresSheet.id}/edit" target="_blank" rel="noopener"><b>Heilman Chores</b> sheet ↗</a>
-    (type <b>No</b> in the Active column to retire a chore). Running totals are in the <b>Points</b> tab; to give bonus points or
-    record points spent, add a row to the <b>Point Adjustments</b> tab (use a minus number for spent).</p></div><p class="small" id="chMsg" role="status"></p>`;
+    (<b>Points</b> tab); to give bonus points or record points spent, add a row to its <b>Point Adjustments</b> tab (use a minus number for spent).</p></div><p class="small" id="chMsg" role="status"></p>`;
 }
 async function choreAction(btn, kid, status) {
-  const name = btn.closest("[data-chore]").dataset.chore, msg = $("#chMsg");
+  const card = btn.closest("[data-chore]"), name = card.dataset.chore, msg = $("#chMsg");
   btn.closest(".chore").querySelectorAll("button").forEach(b => b.disabled = true);
-  try { await setChore(name, kid, status); await renderChores(); }
+  try { if (status === "undo") await undoChoreRow(Number(card.dataset.row), name); else await setChore(name, kid, status); await renderChores(); }
   catch (e) {
     if (e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again.");
     await renderChores().catch(() => {});
     const m = $("#chMsg"); if (m) m.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message);
   }
 }
-function openAddChore() {
-  if (MODE === "claude" || !tokenValid()) return addEventNotice("➕ Add a chore", "Sign in on the family site to add chores.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
+function openChoreEditor(name) {
+  if (MODE === "claude" || !tokenValid()) return addEventNotice("⭐ Chores", "Sign in on the family site to change chores.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
+  if (!isChoreAdmin()) return addEventNotice("⭐ Chores", "Ask Mom or Dad to add or change chores.", "");
   const m = $("#modal"); m.style.setProperty("--c", "var(--accent)");
-  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">⭐ Add a chore</h3>
-    <form class="addev" novalidate>
-      <label>Chore<input name="name" required maxlength="120" placeholder="e.g. Sweep the back porch"></label>
-      <div class="two"><label>Points<input name="points" type="number" min="1" max="100" value="5"></label>
-        <label>How often<select name="often" style="font:inherit;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff"><option>Weekly</option><option>One-time</option></select></label></div>
-      <p class="err" role="alert"></p>
-      <div class="row"><button class="btn" type="submit">➕ Add chore</button><button class="btn ghost" type="button" data-act="close">Cancel</button></div>
-    </form>`;
-  const f = m.querySelector("form");
-  f.addEventListener("submit", async ev => {
-    ev.preventDefault();
-    const name = f.name.value.trim(), pts = Math.round(Number(f.points.value)), err = f.querySelector(".err"), b = f.querySelector("button[type=submit]");
-    if (!name) { err.textContent = "Give the chore a name."; return; }
-    if (!(pts > 0)) { err.textContent = "Points should be 1 or more."; return; }
-    b.disabled = true; b.textContent = "Adding…";
-    try {
-      const { chores } = await loadChoreData();
-      if (chores.some(c => c.name.toLowerCase() === name.toLowerCase())) throw new Error("That chore is already on the list.");
-      await choresApi("/values/" + encodeURIComponent(tabRange(CONFIG.choresSheet.choresTab, "A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
-        { method: "POST", body: JSON.stringify({ values: [[name, pts, f.often.value, "Yes"]] }) });
-      closeModal(); choreWeek = mondayOf(new Date()); renderChores();
-    } catch (e) { err.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message); b.disabled = false; b.textContent = "➕ Add chore"; }
-  });
-  $("#modalBg").classList.add("open"); f.name.focus();
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">${name ? "✏️ Change chore" : "⭐ Add a chore"}</h3>
+    <p class="muted"><span class="spinner"></span> Loading…</p>`;
+  $("#modalBg").classList.add("open");
+  loadChoreData().then(({ chores, retired }) => {
+    const c = name ? [...chores, ...retired].find(x => x.name.toLowerCase() === name.toLowerCase()) : null;
+    if (name && !c) { m.querySelector("p").textContent = "That chore isn't in the list anymore."; return; }
+    const v = c || { name: "", points: 5, freq: "weekly", active: true };
+    const sel = `font:inherit;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff`;
+    m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">${c ? "✏️ Change chore" : "⭐ Add a chore"}</h3>
+      <form class="addev" novalidate>
+        <label>Chore<input name="name" required maxlength="120" placeholder="e.g. Sweep the back porch" value="${esc(v.name)}"></label>
+        <div class="two"><label>Points<input name="points" type="number" min="1" max="100" value="${v.points}"></label>
+          <label>How often<select name="often" style="${sel}">
+            <option value="Daily" ${v.freq === "daily" ? "selected" : ""}>📅 Daily (once a day)</option>
+            <option value="Weekly" ${v.freq === "weekly" ? "selected" : ""}>🔁 Weekly (once a week)</option>
+            <option value="One-time" ${v.freq === "once" ? "selected" : ""}>⭐ One-time</option></select></label></div>
+        ${c ? `<label class="check"><input type="checkbox" name="active" ${v.active ? "checked" : ""}> Show this chore on the site (untick to retire it)</label>` : ""}
+        <p class="small muted" style="margin:0">Tip: for a chore that's only part of the day, put it in the name, e.g. “Feed the pets (evening)”.</p>
+        <p class="err" role="alert"></p>
+        <div class="row"><button class="btn" type="submit">${c ? "💾 Save changes" : "➕ Add chore"}</button><button class="btn ghost" type="button" data-act="close">Cancel</button>
+          ${c ? `<button class="btn ghost sm" type="button" data-del style="margin-left:auto;color:#a23b1c">🗑️ Delete</button>` : ""}</div>
+      </form>`;
+    const f = m.querySelector("form"), err = f.querySelector(".err"), b = f.querySelector("button[type=submit]");
+    const fail = e => { err.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the Heilman Chores sheet." : e.message); b.disabled = false; b.textContent = c ? "💾 Save changes" : "➕ Add chore"; };
+    const del = f.querySelector("[data-del]");
+    if (del) del.onclick = async () => {
+      if (!del.dataset.sure) { del.dataset.sure = "1"; del.textContent = "Tap again to delete"; return; }
+      del.disabled = true; del.textContent = "Deleting…";
+      try { await deleteChore(c.name); closeModal(); renderChores(); } catch (e) { fail(e); del.disabled = false; }
+    };
+    f.addEventListener("submit", async ev => {
+      ev.preventDefault();
+      const nm = f.elements.name.value.trim(), pts = Math.round(Number(f.elements.points.value));
+      if (!nm) { err.textContent = "Give the chore a name."; return; }
+      if (!(pts > 0)) { err.textContent = "Points should be 1 or more."; return; }
+      b.disabled = true; b.textContent = "Saving…";
+      try {
+        await saveChore(c ? c.name : null, { name: nm, points: pts, often: f.elements.often.value, active: c ? f.elements.active.checked : true });
+        closeModal(); choreWeek = mondayOf(new Date()); renderChores();
+      } catch (e) { fail(e); }
+    });
+    f.elements.name.focus();
+  }).catch(e => { if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); } m.querySelector("p").textContent = "⚠️ " + e.message; });
+}
+async function saveChore(oldName, v) {
+  const t = CONFIG.choresSheet;
+  const { chores, retired, log } = await loadChoreData();          // re-read so we change the right row
+  const all = [...chores, ...retired];
+  if (all.some(x => x.name.toLowerCase() === v.name.toLowerCase() && (!oldName || x.name.toLowerCase() !== oldName.toLowerCase())))
+    throw new Error("There's already a chore with that name.");
+  const vals = [v.name, v.points, v.often, v.active ? "Yes" : "No"];
+  if (!oldName) {
+    await choresApi("/values/" + encodeURIComponent(tabRange(t.choresTab, "A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+      { method: "POST", body: JSON.stringify({ values: [vals] }) });
+    return;
+  }
+  const c = all.find(x => x.name.toLowerCase() === oldName.toLowerCase());
+  if (!c) throw new Error("That chore isn't in the list anymore.");
+  const data = [{ range: tabRange(t.choresTab, `A${c.row}:D${c.row}`), values: [vals] }];
+  if (v.name !== c.name)   // renamed: keep its history and this week's progress attached
+    log.filter(l => l.name.toLowerCase() === c.name.toLowerCase()).forEach(l => data.push({ range: tabRange(t.choreLogTab, `B${l.row}`), values: [[v.name]] }));
+  await choresApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+}
+async function deleteChore(name) {
+  const t = CONFIG.choresSheet;
+  const { chores, retired } = await loadChoreData();
+  const c = [...chores, ...retired].find(x => x.name.toLowerCase() === name.toLowerCase());
+  if (!c) return;
+  const meta = await choresApi("?fields=sheets.properties(sheetId,title)");
+  const sh = (meta.sheets || []).find(x => x.properties.title === t.choresTab);
+  if (!sh) throw new Error("Couldn't find the Chores tab.");
+  await choresApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ deleteDimension: {
+    range: { sheetId: sh.properties.sheetId, dimension: "ROWS", startIndex: c.row - 1, endIndex: c.row } } }] }) });
 }
 $("#chPrev").onclick = () => { choreWeek = addDays(choreWeek || mondayOf(new Date()), -7); renderChores(); };
 $("#chNext").onclick = () => { const n = addDays(choreWeek || mondayOf(new Date()), 7); if (n <= mondayOf(new Date())) { choreWeek = n; renderChores(); } };
@@ -1911,11 +1986,12 @@ document.addEventListener("click", ev => {
   if (t.dataset.ev) return openEvent(t.dataset.ev);
   if (t.dataset.act === "close") return closeModal();
   if (t.dataset.act === "add-event") return openAddEvent();
-  if (t.dataset.act === "add-chore") return openAddChore();
+  if (t.dataset.act === "add-chore") return openChoreEditor(null);
+  if (t.dataset.act === "chore-edit") return openChoreEditor(t.closest("[data-chore]").dataset.chore);
   if (t.dataset.act === "pick-avatar") return openAvatarPicker(t.dataset.kid);
   if (t.dataset.act === "chore-claim") return choreAction(t, t.dataset.kid, "claimed");
   if (t.dataset.act === "chore-done") return choreAction(t, "", "done");
-  if (t.dataset.act === "chore-undo") return choreAction(t, "", "claimed");
+  if (t.dataset.act === "chore-undo") return choreAction(t, "", "undo");
   if (t.dataset.act === "chore-drop") return choreAction(t, "", null);
   if (t.dataset.act === "retry-chores") { choreTabsOk = false; return renderChores(); }
   if (t.dataset.act === "hide-ev") return runHide(t, e => hideEvent(e, false));
