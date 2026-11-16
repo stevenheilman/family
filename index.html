@@ -498,8 +498,9 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         <span class="sticky" style="--r:-1deg;background:#ffd6e7">You've got this 💪</span>
         <span class="sticky" style="--r:3deg;background:#cfe8ff">Trip ideas 🏖️</span>
       </div>
+      <div class="row" style="justify-content:center;margin:0 0 14px"><a class="btn" id="boardEditTop" target="_blank" rel="noopener">✏️ Write on the board</a></div>
       <div class="paper" id="boardSlot"></div>
-      <p class="small" style="color:#fffbea;text-align:center;margin:16px 0 0">Write over old notes freely. No archive needed.</p>
+      <p class="small" style="color:#fffbea;text-align:center;margin:16px 0 0">Write over old notes freely. No archive needed. New notes show up here within about 5–10 minutes.</p>
     </div>
   </section>
 
@@ -566,7 +567,7 @@ const CONFIG = {
     grocerySheet: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQuCWdZAw68SI5d9H2azIcwlTmk9Kf9AdvvzjaoU3AAux3qyn0zxX-2RuxNd3ya4wmmmUuWSFpJTG-y/pubhtml?gid=557803561&single=true&widget=true&headers=false",
     heb:          "https://www.heb.com/shopping-list/shared/4e0a2fb4-dc7e-4650-91fa-0ac1a6d6ab6a",
     bulletinDoc:  "https://docs.google.com/document/d/e/2PACX-1vR1bRS2j1jGltso0yLmdxyshbY3alG0F6xb07FdUJiGD2QMbn6K4_AvdcEDz8kc22iExtkOXPifg8ws/pub?embedded=true",
-    bulletinEdit: ""   // optional: the Doc's normal "edit" link, to show an ✏️ Edit button
+    bulletinEdit: "https://docs.google.com/document/d/15KonCnGIlpeGTxGAehpXGGn3BxciNsrvQGCsFeGXz5g/edit"   // the Doc's "edit" link, for the ✏️ Edit button
   },
 
   /* Leander ISD 2026-27 secondary six-week grading periods
@@ -1796,6 +1797,8 @@ async function kidChorePoints(id) {
 /* ---------- Embeds (Groceries + Bulletin Board) ---------- */
 function renderEmbeds() {
   $("#hebBtn").href = CONFIG.links.heb;
+  const be = $("#boardEditTop");
+  if (CONFIG.links.bulletinEdit) be.href = CONFIG.links.bulletinEdit; else be.parentElement.style.display = "none";
   const openLink = (url, label) => `<a class="btn" href="${esc(url)}" target="_blank" rel="noopener">${label}</a>`;
   const plain = u => u.replace(/([?&])(embedded=true|widget=true)&?/g, "$1").replace(/[?&]$/, "");
   if (MODE === "claude") {
