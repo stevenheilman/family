@@ -215,6 +215,16 @@ section.page.active{display:block;animation:fade .25s ease}
 .modal .meta div{display:flex;gap:10px}
 .modal .meta div > span:first-child{flex:0 0 22px}
 .modal .desc{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.92rem;background:color-mix(in srgb,var(--c,#999) 6%,var(--card));padding:12px;border-radius:12px;max-height:40vh;overflow:auto}
+.modal form.addev{display:grid;gap:12px;margin-top:12px}
+.addev label{display:grid;gap:4px;font-weight:800;font-size:.86rem;color:var(--muted)}
+.addev input,.addev textarea{font:inherit;font-size:.95rem;font-weight:600;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);width:100%;min-width:0}
+.addev input:focus,.addev textarea:focus{outline:2px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:0}
+.addev textarea{min-height:70px;resize:vertical}
+.addev .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.addev label.check{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:.92rem}
+.addev label.check input{width:auto}
+.addev .err{color:#a23b1c;font-weight:700;font-size:.9rem}
+.addev .err:empty{display:none}
 .modal .close{float:right;border:0;background:transparent;font-size:1.6rem;cursor:pointer;line-height:1;color:var(--muted)}
 
 /* ============================== MEALS / GROCERIES */
@@ -352,6 +362,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         <button class="btn ghost sm" id="weekPrev" aria-label="Previous week">← Prev</button>
         <button class="btn ghost sm" id="weekToday">This week</button>
         <button class="btn ghost sm" id="weekNext" aria-label="Next week">Next →</button>
+        <button class="btn sm" data-act="add-event">➕ Add event</button>
         <span class="sync" id="syncWeek"></span>
       </div>
     </div>
@@ -371,6 +382,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
         <span class="navgrp"><button class="btn ghost sm" id="monPrev" aria-label="Previous month">←</button>
         <button class="btn ghost sm" id="monToday">Today</button>
         <button class="btn ghost sm" id="monNext" aria-label="Next month">→</button></span>
+        <button class="btn sm" data-act="add-event">➕ Add event</button>
       </div>
       <div id="calBody"><span class="spinner"></span></div>
       <div class="agenda" id="agenda"></div>
@@ -761,26 +773,28 @@ function loadGis() {
 }
 const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
 const SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+const CAL_WRITE_SCOPE = "https://www.googleapis.com/auth/calendar.events";   // lets the site add events to the Family calendar
 state.profile = store.get("profile", null);   // { name, email } of the Google account used on this device
 async function signIn({ switchAccount = false, consent = false } = {}) {
   await loadGis();
   if (!tokenClient) {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CONFIG.googleClientId,
-      scope: "openid email profile " + CAL_SCOPE + " " + SHEETS_SCOPE,
+      scope: "openid email profile " + CAL_SCOPE + " " + CAL_WRITE_SCOPE + " " + SHEETS_SCOPE,
       callback: async r => {
         if (r.error) { setStatus("needs-signin", "Google sign-in didn't finish. Try again."); return; }
         if (!google.accounts.oauth2.hasGrantedAllScopes(r, CAL_SCOPE)) {
           setStatus("needs-signin", "Google sign-in worked, but calendar access wasn't allowed. Sign in again and check the box to let the site see your calendars.");
           return;
         }
-        gToken = { t: r.access_token, exp: Date.now() + (r.expires_in || 3600) * 1000 };
+        gToken = { t: r.access_token, exp: Date.now() + (r.expires_in || 3600) * 1000, scope: r.scope || "" };
         store.set("gtoken", gToken); store.set("signedIn", true);
         try {
           const u = await (await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: "Bearer " + gToken.t } })).json();
           state.profile = { name: u.given_name || u.name || nameFromEmail(u.email), email: u.email || "" };
           store.set("profile", state.profile);
         } catch {}
+        if (pendingAdd) { const d = pendingAdd; pendingAdd = null; boot().then(() => openAddEvent(d)); return; }
         boot();
       }
     });
@@ -1089,7 +1103,8 @@ async function renderMonth() {
   const dayList = onDay(evs, selectedDay);
   $("#agenda").innerHTML = (selectedDay >= gridStart && selectedDay < gridEnd)
     ? `<div class="daygroup"><h3>${fmt(selectedDay, { weekday: "long", month: "long", day: "numeric" })}</h3>
-       <div class="ev-list">${dayList.map(e => evButton(e, { day: selectedDay })).join("") || `<p class="empty">No events this day.</p>`}</div></div>` : "";
+       <div class="ev-list">${dayList.map(e => evButton(e, { day: selectedDay })).join("") || `<p class="empty">No events this day.</p>`}</div>
+       <div class="row" style="margin-top:10px"><button class="btn ghost sm" data-act="add-on-day" data-date="${ymd(selectedDay)}">➕ Add event on ${fmt(selectedDay, { month: "short", day: "numeric" })}</button></div></div>` : "";
 }
 
 /* ---------- Dinner plan (Google Sheet: Meals list + Plan by date) ---------- */
@@ -1274,6 +1289,104 @@ function renderEmbeds() {
 }
 
 /* =====================================================================
+   ADD EVENT (writes to the Google Family calendar)
+   ===================================================================== */
+let pendingAdd = null;   // form values to restore after a permission prompt
+const familyCalId = () => Object.keys(CONFIG.calendars).find(id => CONFIG.calendars[id].category === "Family Events");
+const canWrite = () => !!(gToken && gToken.scope && gToken.scope.split(" ").includes(CAL_WRITE_SCOPE));
+function addEventNotice(title, body, btn) {
+  const m = $("#modal"); m.style.setProperty("--c", CAT_COLORS["Family Events"]);
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">${title}</h3><p>${body}</p>${btn ? `<div class="row">${btn}</div>` : ""}`;
+  $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
+}
+function openAddEvent(prefill = {}) {
+  if (MODE === "claude") return addEventNotice("➕ Add an event", "Adding events works on the family website. In this preview, add it in Google Calendar instead.",
+    `<a class="btn sm" href="https://calendar.google.com/calendar/r/eventedit" target="_blank" rel="noopener">Open Google Calendar ↗</a>`);
+  if (!tokenValid()) { pendingAdd = prefill; return addEventNotice("➕ Add an event", "Sign in with Google first, so the event is added to the Family calendar under your name.",
+    `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`); }
+  if (!canWrite()) { pendingAdd = prefill; return addEventNotice("➕ One more permission needed",
+    "To add events, Google needs your OK for this site to create events on calendars you can edit. It still can't delete or change anything you didn't add here.",
+    `<button class="btn sm" data-act="cal-consent">✅ Allow adding events</button>`); }
+  const def = prefill.date || ymd(current() === "calendar" ? selectedDay : new Date());
+  const v = { title: "", date: def, start: "18:00", end: "19:00", allDay: false, location: "", notes: "", ...prefill };
+  if (!v.endDate || v.endDate < v.date) v.endDate = v.date;
+  const m = $("#modal"); m.style.setProperty("--c", CAT_COLORS["Family Events"]);
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
+    <span class="tag" style="--c:${CAT_COLORS["Family Events"]}">${CAT_EMOJI["Family Events"]} Family calendar</span>
+    <h3 id="mTitle" style="margin-top:10px">Add an event</h3>
+    <form class="addev" novalidate>
+      <label>What's happening?<input name="title" required maxlength="200" placeholder="e.g. Holden's dentist appointment" value="${esc(v.title)}"></label>
+      <label class="check"><input type="checkbox" name="allDay" ${v.allDay ? "checked" : ""}> All-day event</label>
+      <div class="two timed"><label>Date<input type="date" name="date" required value="${esc(v.date)}"></label><span></span>
+        <label>Starts<input type="time" name="start" value="${esc(v.start)}"></label><label>Ends<input type="time" name="end" value="${esc(v.end)}"></label></div>
+      <div class="two allday"><label>First day<input type="date" name="adStart" value="${esc(v.date)}"></label><label>Last day<input type="date" name="adEnd" value="${esc(v.endDate)}"></label></div>
+      <label><span>Where? <span style="font-weight:600">(optional)</span></span><input name="location" maxlength="300" placeholder="Address or place" value="${esc(v.location)}"></label>
+      <label><span>Notes <span style="font-weight:600">(optional)</span></span><textarea name="notes" maxlength="4000">${esc(v.notes)}</textarea></label>
+      <p class="err" role="alert"></p>
+      <div class="row"><button class="btn" type="submit">➕ Add to Family calendar</button><button class="btn ghost" type="button" data-act="close">Cancel</button></div>
+    </form>`;
+  const f = m.querySelector("form");
+  const sync = () => { const ad = f.allDay.checked; f.querySelector(".timed").style.display = ad ? "none" : ""; f.querySelector(".allday").style.display = ad ? "" : "none"; };
+  f.allDay.addEventListener("change", sync); sync();
+  // Keep the end time an hour after the start when the start moves; keep "last day" on/after "first day".
+  f.start.addEventListener("change", () => { if (!f.start.value) return; const [h, mi] = f.start.value.split(":").map(Number); f.end.value = `${pad((h + 1) % 24)}:${pad(mi)}`; });
+  f.adStart.addEventListener("change", () => { if (!f.adEnd.value || f.adEnd.value < f.adStart.value) f.adEnd.value = f.adStart.value; });
+  f.addEventListener("submit", ev => { ev.preventDefault(); saveNewEvent(f); });
+  $("#modalBg").classList.add("open"); f.title.focus();
+}
+function formValues(f) {
+  return { title: f.title.value.trim(), allDay: f.allDay.checked, date: f.allDay.checked ? f.adStart.value : f.date.value, endDate: f.adEnd.value,
+           start: f.start.value, end: f.end.value, location: f.location.value.trim(), notes: f.notes.value.trim() };
+}
+async function saveNewEvent(f) {
+  const v = formValues(f), err = f.querySelector(".err"), btn = f.querySelector("button[type=submit]");
+  err.textContent = "";
+  if (!v.title) { err.textContent = "Give the event a name."; return f.title.focus(); }
+  if (!v.date) { err.textContent = "Pick a date."; return; }
+  const tz = CONFIG.timeZone, body = { summary: v.title };
+  if (v.location) body.location = v.location;
+  const who = (state.profile && state.profile.name) || "";
+  if (v.notes || who) body.description = [v.notes, who ? `Added by ${who} on the family website.` : ""].filter(Boolean).join("\n\n");
+  if (v.allDay) {
+    const last = v.endDate && v.endDate >= v.date ? v.endDate : v.date;
+    body.start = { date: v.date }; body.end = { date: ymd(addDays(parseYMD(last), 1)) };   // Google's all-day end date is the day after
+  } else {
+    if (!v.start || !v.end) { err.textContent = "Pick a start and end time, or tick All-day."; return; }
+    let endDay = v.date;
+    if (v.end <= v.start) endDay = ymd(addDays(parseYMD(v.date), 1));   // e.g. 9 PM – 12 AM ends the next day
+    body.start = { dateTime: `${v.date}T${v.start}:00`, timeZone: tz }; body.end = { dateTime: `${endDay}T${v.end}:00`, timeZone: tz };
+  }
+  const calId = familyCalId();
+  btn.disabled = true; btn.textContent = "Adding…";
+  try {
+    const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events`,
+      { method: "POST", headers: { Authorization: "Bearer " + gToken.t, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    if (r.status === 401) { pendingAdd = v; gToken = null; store.set("gtoken", null);
+      return addEventNotice("Sign in again", "Your Google sign-in expired. Sign in again and your event will still be filled in.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`); }
+    if (!r.ok) {
+      let j = {}; try { j = await r.json(); } catch {}
+      const msg = (j.error && j.error.message) || "";
+      if (/insufficient|scope/i.test(msg)) { pendingAdd = v; return addEventNotice("➕ One more permission needed", "Google needs your OK for this site to add events.", `<button class="btn sm" data-act="cal-consent">✅ Allow adding events</button>`); }
+      if (r.status === 403 || r.status === 404) throw new Error(`This Google account (${(state.profile && state.profile.email) || "the one signed in"}) isn't allowed to add events to the Family calendar. Ask a parent to share the Family calendar with you with "Make changes to events" permission.`);
+      throw new Error(msg || "Google Calendar error " + r.status);
+    }
+    const ev = await r.json();
+    // Show the new event right away: jump to its day and reload events.
+    selectedDay = parseYMD(v.date); monthCursor = new Date(selectedDay.getFullYear(), selectedDay.getMonth(), 1);
+    if (current() === "week") weekStart = startOfWeek(selectedDay);
+    state.hidden.delete(calId); store.set("hidden", [...state.hidden]);
+    state.months.clear(); renderAll();
+    const when = v.allDay ? fmt(parseYMD(v.date), { weekday: "long", month: "long", day: "numeric" })
+      : `${fmt(parseYMD(v.date), { weekday: "long", month: "long", day: "numeric" })} at ${fmtTime(new Date(`${v.date}T${v.start}:00`))}`;
+    addEventNotice("✅ Added to the Family calendar", `<b>${esc(v.title)}</b><br>${esc(when)}`,
+      `<button class="btn sm" data-act="add-event">➕ Add another</button>${ev.htmlLink ? `<a class="btn ghost sm" href="${esc(ev.htmlLink)}" target="_blank" rel="noopener">Open in Google Calendar ↗</a>` : ""}<button class="btn ghost sm" data-act="close">Done</button>`);
+  } catch (e) {
+    err.textContent = "⚠️ " + (e.message || "The event couldn't be added. Check your connection and try again.");
+    btn.disabled = false; btn.textContent = "➕ Add to Family calendar";
+  }
+}
+
+/* =====================================================================
    EVENT DETAILS MODAL
    ===================================================================== */
 function linkify(t) { return esc(t).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
@@ -1296,7 +1409,7 @@ function openEvent(key) {
     `;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
-function closeModal() { $("#modalBg").classList.remove("open"); }
+function closeModal() { $("#modalBg").classList.remove("open"); pendingAdd = null; }
 
 /* =====================================================================
    ROUTING + EVENTS
@@ -1334,6 +1447,9 @@ document.addEventListener("click", ev => {
   const t = ev.target.closest("[data-ev],[data-day],[data-cat],[data-cal],[data-act]"); if (!t) return;
   if (t.dataset.ev) return openEvent(t.dataset.ev);
   if (t.dataset.act === "close") return closeModal();
+  if (t.dataset.act === "add-event") return openAddEvent();
+  if (t.dataset.act === "add-on-day") return openAddEvent({ date: t.dataset.date });
+  if (t.dataset.act === "cal-consent") return signIn({ consent: true }).catch(e => setStatus("error", e.message));
   if (t.dataset.act === "signin") return signIn().catch(e => setStatus("error", e.message));
   if (t.dataset.act === "retry") return boot();
   if (t.dataset.act === "switch") return signIn({ switchAccount: true }).catch(e => setStatus("error", e.message));
