@@ -87,6 +87,10 @@ section.page.active{display:block;animation:fade .25s ease}
 .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr))}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
   box-shadow:var(--shadow);padding:18px 20px;min-width:0}
+/* A colored stripe on top of each card, cycling through the season's colors */
+.grid > .card{border-top:5px solid var(--accent)}
+.grid > .card:nth-child(3n+2){border-top-color:var(--accent2)}
+.grid > .card:nth-child(3n+3){border-top-color:var(--accent3,var(--accent2))}
 .card h2{font-size:1.18rem;display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .card h2 .tag{margin-left:auto}
 .span-2{grid-column:span 2}
@@ -116,8 +120,9 @@ section.page.active{display:block;animation:fade .25s ease}
 /* ============================== HERO (seasonal) */
 .hero{position:relative;overflow:hidden;border-radius:26px;padding:34px 30px 46px;margin-bottom:20px;
   color:var(--hero-ink);
-  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent2) 30%,transparent) 0%,transparent 55%),
-             radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--accent) 34%,transparent) 0%,transparent 60%),
+  background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--accent2) 34%,transparent) 0%,transparent 55%),
+             radial-gradient(120% 140% at 100% 0%,color-mix(in srgb,var(--accent) 40%,transparent) 0%,transparent 60%),
+             radial-gradient(90% 120% at 55% 120%,color-mix(in srgb,var(--accent3,var(--accent2)) 38%,transparent) 0%,transparent 60%),
              linear-gradient(135deg,var(--card),color-mix(in srgb,var(--bg2) 70%,var(--card)));
   border:1px solid var(--line);box-shadow:var(--shadow)}
 .hero .kicker{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;color:var(--accent)}
@@ -257,6 +262,31 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 .dn select{width:100%;font:inherit;font-size:.92rem;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
 .dn .saved{font-size:.74rem;color:var(--muted);min-height:1em}
 
+/* ============================== CHORES */
+.scores{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));margin-bottom:18px}
+.score{border-radius:18px;padding:16px 18px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 22%,var(--card)),var(--card));
+  border:2px solid color-mix(in srgb,var(--c) 45%,transparent);display:flex;align-items:center;gap:14px}
+.score .avatar{font-size:2.2rem;width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:var(--card);flex:none}
+.score b.name{font-family:var(--font-head);font-size:1.3rem;display:block}
+.score .pts{font-family:var(--font-head);font-size:2.3rem;font-weight:700;line-height:1;color:color-mix(in srgb,var(--c) 80%,#000)}
+.score .pts small{font-family:var(--font-body);font-size:.9rem;font-weight:800;color:var(--muted);margin-left:4px}
+.score .lead{margin-left:auto;font-size:1.8rem}
+.chore-sec h3{font-size:1.15rem;margin:18px 0 10px;display:flex;gap:8px;align-items:center}
+.chores{display:grid;gap:10px}
+.chore{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-left:6px solid var(--c,var(--accent))}
+.chore .info{flex:1;min-width:180px}
+.chore .info b{display:block;font-size:1.02rem}
+.chore .info .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.chore .ptsbadge{font-family:var(--font-head);font-weight:700;font-size:1.25rem;min-width:62px;text-align:center;padding:6px 8px;border-radius:12px;
+  background:color-mix(in srgb,var(--accent3,var(--accent2)) 22%,var(--card));color:color-mix(in srgb,var(--accent3,var(--accent2)) 55%,#000)}
+.chore .ptsbadge small{display:block;font-family:var(--font-body);font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em}
+.chore .acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chore.done{opacity:.85;background:color-mix(in srgb,var(--c) 8%,var(--card))}
+.chore.done .info b{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--c) 70%,transparent)}
+.kidbtn{border:2px solid var(--c);background:color-mix(in srgb,var(--c) 14%,var(--card));color:var(--ink);font-weight:800;border-radius:999px;padding:7px 12px;cursor:pointer;font-size:.86rem}
+.kidbtn:hover{background:color-mix(in srgb,var(--c) 26%,var(--card))}
+.kidbtn:disabled,.chore .btn:disabled{opacity:.5;cursor:wait}
+
 /* ============================== KIDS */
 .kid-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .kid-hero .avatar{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;font-size:2rem;background:color-mix(in srgb,var(--accent) 16%,var(--card))}
@@ -305,6 +335,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <a href="#week">📅 Week at a Glance</a>
       <a href="#calendar">📆 Family Calendar</a>
       <a href="#meals">🍽️ Meal Plan &amp; Groceries</a>
+      <a href="#chores">⭐ Chores</a>
       <a href="#graham">📚 Graham</a>
       <a href="#holden">📚 Holden</a>
       <a href="#board">📌 Bulletin Board</a>
@@ -423,6 +454,21 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
     </details>
   </section>
 
+  <!-- ===================================================== CHORES -->
+  <section class="page" id="page-chores" data-title="⭐ Chores">
+    <div class="page-head">
+      <div><h1>Chores</h1><p>Pick a chore, get it done, earn points. Points reset every Monday.</p></div>
+      <div class="row">
+        <button class="btn ghost sm" id="chPrev" aria-label="Previous week">← Prev</button>
+        <button class="btn ghost sm" id="chToday">This week</button>
+        <button class="btn ghost sm" id="chNext" aria-label="Next week">Next →</button>
+        <button class="btn sm" data-act="add-chore">➕ Add a chore</button>
+      </div>
+    </div>
+    <p class="muted small" id="chRange" style="margin:-8px 0 14px"></p>
+    <div id="chores"><span class="spinner"></span></div>
+  </section>
+
   <!-- ===================================================== KIDS -->
   <section class="page" id="page-graham" data-title="📚 Graham"></section>
   <section class="page" id="page-holden" data-title="📚 Holden"></section>
@@ -488,7 +534,8 @@ const CONFIG = {
   /* Dinner plan: the family meal-plan Google Sheet.
      Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
   mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
-               hiddenTab: "Hidden Events" },   // events the family hid from the site (created automatically)
+               hiddenTab: "Hidden Events",
+               choresTab: "Chores", choreLogTab: "Chore Log" },   // chore list + who did what (tabs created automatically)   // events the family hid from the site (created automatically)
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -584,7 +631,7 @@ const THEMES = {
   halloween:   { kicker:"Spooky season", title:"Boo! It's almost Halloween", emoji:["🎃","👻","🦇","🍬","🕸️","🌙"], logo:"🎃",
                  c:{bg1:"#fff5ea",bg2:"#ffdcb8",accent:"#e86a10",accent2:"#6b3fa0",ink:"#2c1c10",muted:"#7f6450",card:"#fffaf4",line:"#f3d9bd"} },
   thanksgiving:{ kicker:"Season of thanks", title:"Grateful for this crew", emoji:["🦃","🍂","🥧","🌽","🍁","🧡"], logo:"🦃",
-                 c:{bg1:"#fff6ec",bg2:"#f8dfc4",accent:"#b5541c",accent2:"#c9932e",ink:"#3b2414",muted:"#86664e",card:"#fffbf6",line:"#efdcc6"} },
+                 c:{bg1:"#fff4e3",bg2:"#ffd6a0",accent:"#e8590c",accent2:"#c2255c",accent3:"#f59f00",ink:"#3b1e0c",muted:"#8c5a34",card:"#fffaf2",line:"#f5d2a6"} },
   christmas:   { kicker:"Holiday season", title:"Merry & bright, family", emoji:["🎄","❄️","🎁","⭐","🦌","🍪"], logo:"🎄",
                  c:{bg1:"#f6fbf7",bg2:"#e2efe5",accent:"#b3262f",accent2:"#1e7a46",ink:"#1f2a22",muted:"#617166",card:"#fcfffd",line:"#dbe9df"} }
 };
@@ -612,7 +659,7 @@ function applyTheme() {
   try { const q = new URLSearchParams(location.search).get("theme"); if (q && THEMES[q]) key = q; } catch {}
   const t = THEMES[key], r = document.documentElement.style;
   r.setProperty("--bg1", t.c.bg1); r.setProperty("--bg2", t.c.bg2); r.setProperty("--accent", t.c.accent);
-  r.setProperty("--accent2", t.c.accent2); r.setProperty("--ink", t.c.ink); r.setProperty("--hero-ink", t.c.ink);
+  r.setProperty("--accent2", t.c.accent2); r.setProperty("--accent3", t.c.accent3 || t.c.accent2); r.setProperty("--ink", t.c.ink); r.setProperty("--hero-ink", t.c.ink);
   r.setProperty("--muted", t.c.muted); r.setProperty("--card", t.c.card); r.setProperty("--line", t.c.line);
   $("#logoEmoji").textContent = t.logo;
   const hour = now.getHours();
@@ -1224,6 +1271,181 @@ $("#dinPrev").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()
 $("#dinNext").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()), 7); renderMeals(); };
 $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); };
 
+/* ---------- Chores (stored in the meal-plan Google Sheet) ----------
+   Tab "Chores":    A Chore · B Points · C How often (Weekly / One-time) · D Active (blank or Yes = shown; No = retired)
+   Tab "Chore Log": A Week (Monday) · B Chore · C Kid · D Status (claimed / done) · E Points · F Updated
+   Weekly chores can be done once per week; one-time chores disappear once done. */
+const STARTER_CHORES = [
+  ["Take out the trash & recycling", 5, "Weekly"], ["Empty the dishwasher", 3, "Weekly"], ["Feed the pets", 2, "Weekly"],
+  ["Vacuum the living room", 5, "Weekly"], ["Clean your bathroom sink & mirror", 4, "Weekly"], ["Fold & put away laundry", 4, "Weekly"],
+  ["Set & clear the dinner table", 2, "Weekly"], ["Wipe down kitchen counters", 2, "Weekly"],
+  ["Help put up holiday decorations", 15, "One-time"], ["Rake the leaves", 10, "One-time"], ["Wash the car", 10, "One-time"]
+];
+const KID_COLORS = ["#1f74c4", "#2f8a52", "#7a63d1", "#e0584c"];
+const kidList = () => Object.values(CONFIG.kids).map((k, i) => ({ ...k, color: KID_COLORS[i % KID_COLORS.length] }));
+const tabRange = (tab, cols) => `'${tab}'!${cols}`;
+let choreWeek = null, choreTabsOk = false;
+async function ensureChoreTabs() {
+  if (choreTabsOk) return;
+  const t = CONFIG.mealSheet;
+  const meta = await sheetsApi("?fields=sheets.properties.title");
+  const have = new Set((meta.sheets || []).map(sh => sh.properties.title));
+  const add = [t.choresTab, t.choreLogTab].filter(n => !have.has(n));
+  if (add.length) {
+    await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: add.map(title => ({ addSheet: { properties: { title } } })) }) });
+    const data = [];
+    if (add.includes(t.choresTab)) data.push({ range: tabRange(t.choresTab, "A1:D"), values: [["Chore", "Points", "How often (Weekly / One-time)", "Active (No = hide)"], ...STARTER_CHORES.map(c => [...c, "Yes"])] });
+    if (add.includes(t.choreLogTab)) data.push({ range: tabRange(t.choreLogTab, "A1:F1"), values: [["Week (Monday)", "Chore", "Kid", "Status", "Points", "Updated"]] });
+    await sheetsApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+  }
+  choreTabsOk = true;
+}
+const normDate = v => { const k = String(v || "").trim(); const m = k.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); return m ? `${m[3]}-${pad(m[1])}-${pad(m[2])}` : k; };
+async function loadChoreData() {
+  await ensureChoreTabs();
+  const t = CONFIG.mealSheet;
+  const q = "?ranges=" + encodeURIComponent(tabRange(t.choresTab, "A2:D")) + "&ranges=" + encodeURIComponent(tabRange(t.choreLogTab, "A2:F"));
+  const j = await sheetsApi("/values:batchGet" + q);
+  const [cv, lv] = (j.valueRanges || []).map(v => v.values || []);
+  const chores = (cv || []).filter(r => r[0] && String(r[0]).trim() && !/^(no|n|false)$/i.test(String(r[3] || "").trim()))
+    .map(r => ({ name: String(r[0]).trim(), points: Math.max(0, Math.round(Number(r[1]) || 0)), once: /one|once|single/i.test(String(r[2] || "")) }));
+  const log = [];
+  (lv || []).forEach((r, i) => {
+    const name = String(r[1] || "").trim(); if (!name) return;
+    log.push({ week: normDate(r[0]), name, kid: String(r[2] || "").trim(), status: String(r[3] || "").trim().toLowerCase(), points: Number(r[4]) || 0, row: i + 2 });
+  });
+  return { chores, log };
+}
+// The log row that a chore's state lives in for the given week (one-time chores: any week).
+function choreEntry(log, chore, week) {
+  const same = l => l.name.toLowerCase() === chore.name.toLowerCase();
+  return chore.once ? (log.find(l => same(l) && l.status === "done") || log.find(l => same(l) && l.week === week)) : log.find(l => same(l) && l.week === week);
+}
+async function setChore(choreName, kid, status) {
+  const t = CONFIG.mealSheet, week = ymd(mondayOf(new Date()));
+  const { chores, log } = await loadChoreData();           // re-read so two people tapping at once don't clash
+  const chore = chores.find(c => c.name.toLowerCase() === choreName.toLowerCase()) || { name: choreName, points: 0, once: false };
+  const cur = choreEntry(log, chore, week);
+  if (cur && cur.status && kid && cur.kid && cur.kid !== kid) throw new Error(`${cur.kid} already picked this one.`);
+  if (cur && cur.status === "done" && cur.week !== week) throw new Error("This one-time chore was already done.");
+  const now = new Date().toLocaleString("en-US", { timeZone: CONFIG.timeZone });
+  if (!status) {
+    if (cur) await sheetsApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)] }) });
+    return;
+  }
+  const row = [week, chore.name, kid || (cur && cur.kid) || "", status, chore.points, now];
+  if (cur) await sheetsApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, `A${cur.row}:F${cur.row}`)) + "?valueInputOption=RAW",
+    { method: "PUT", body: JSON.stringify({ values: [row] }) });
+  else await sheetsApi("/values/" + encodeURIComponent(tabRange(t.choreLogTab, "A:F")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+    { method: "POST", body: JSON.stringify({ values: [row] }) });
+}
+function choresNotice(e) {
+  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Chores are saved in the family's Google Sheet. Allow the site to use Google Sheets.
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="sheets-consent">✅ Allow</button></div></div>`;
+  if (e.kind === "access") return `<div class="notice warn"><b>No access to the chore list</b>Chores live in the family meal-plan Google Sheet. Ask a parent to share it with this Google account (as an editor).</div>`;
+  if (e.kind === "api") return `<div class="notice warn"><b>Google Sheets isn't turned on yet</b>In your Google Cloud project, search for <b>Google Sheets API</b> and click <b>Enable</b>.</div>`;
+  return `<div class="notice warn"><b>Chores couldn't load</b>${esc(e.message)}<div class="row" style="margin-top:10px"><button class="btn sm" data-act="retry-chores">↻ Try again</button></div></div>`;
+}
+function weekTotals(log, week) {
+  const tot = {}; kidList().forEach(k => tot[k.name] = { pts: 0, n: 0 });
+  log.filter(l => l.week === week && l.status === "done").forEach(l => { (tot[l.kid] = tot[l.kid] || { pts: 0, n: 0 }); tot[l.kid].pts += l.points; tot[l.kid].n++; });
+  return tot;
+}
+async function renderChores() {
+  if (!choreWeek) choreWeek = mondayOf(new Date());
+  const thisWeek = mondayOf(new Date()), isNow = sameDay(choreWeek, thisWeek), wk = ymd(choreWeek);
+  $("#chRange").textContent = `Week of Monday ${fmt(choreWeek, { month: "long", day: "numeric" })} – Sunday ${fmt(addDays(choreWeek, 6), { month: "long", day: "numeric", year: "numeric" })}${isNow ? " · This week" : ""}`;
+  $("#chNext").disabled = isNow;
+  const el = $("#chores");
+  if (MODE === "claude") { el.innerHTML = `<p class="empty">Chores work on the family site (they're saved to the family's Google Sheet), not in this preview.</p>`; return; }
+  if (!CONFIG.googleClientId) { el.innerHTML = statusBlock(); return; }
+  if (!tokenValid()) { el.innerHTML = `<div class="notice"><b>Sign in to see and pick chores</b>Chores and points are shared with the whole family through Google.
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="signin">🔐 Sign in with Google</button></div></div>`; return; }
+  if (!el.querySelector(".scores")) el.innerHTML = `<p class="muted"><span class="spinner"></span> Loading chores…</p>`;
+  let data;
+  try { data = await loadChoreData(); }
+  catch (e) { if (e.auth) throw e; el.innerHTML = choresNotice(e); return; }
+  const kids = kidList(), kidColor = n => (kids.find(k => k.name === n) || {}).color || "#8a8a8a";
+  const tot = weekTotals(data.log, wk), best = Math.max(...Object.values(tot).map(t => t.pts));
+  const scores = `<div class="scores">${kids.map(k => `<div class="score" style="--c:${k.color}"><span class="avatar">${k.emoji}</span>
+      <div><b class="name">${esc(k.name)}</b><div class="pts">${tot[k.name].pts}<small>points</small></div>
+      <div class="small muted">${tot[k.name].n} chore${tot[k.name].n === 1 ? "" : "s"} done ${isNow ? "this week" : "that week"}</div></div>
+      ${best > 0 && tot[k.name].pts === best ? `<span class="lead" title="Top score">🏆</span>` : ""}</div>`).join("")}</div>`;
+  const tagsFor = c => `<span class="tag" style="--c:${c.once ? "#c2255c" : "#1f74c4"}">${c.once ? "⭐ One-time" : "🔁 Weekly"}</span>`;
+  const badge = p => `<span class="ptsbadge">${p}<small>pts</small></span>`;
+  const row = (c, cls, color, extra, acts) => `<div class="chore ${cls}" style="--c:${color}" data-chore="${esc(c.name)}">${badge(c.points)}
+      <div class="info"><b>${esc(c.name)}</b><div class="tags">${tagsFor(c)}${extra}</div></div><div class="acts">${acts}</div></div>`;
+  let body;
+  if (isNow) {
+    const open = [], doing = [], done = [];
+    data.chores.forEach(c => {
+      const e = choreEntry(data.log, c, wk);
+      if (!e || !e.status) open.push(c);
+      else if (e.status === "done") { if (e.week === wk) done.push([c, e]); }   // one-time chores done in earlier weeks are gone
+      else doing.push([c, e]);
+    });
+    const kidBtns = c => kids.map(k => `<button class="kidbtn" style="--c:${k.color}" data-act="chore-claim" data-kid="${esc(k.name)}">🙋 ${esc(k.name)}</button>`).join("");
+    body = `<div class="chore-sec"><h3>🙋 Up for grabs <span class="tag" style="--c:var(--accent)">${open.length}</span></h3>
+      <div class="chores">${open.map(c => row(c, "", "var(--accent)", "", kidBtns(c))).join("") || `<p class="empty">Every chore is taken. Way to go! 🎉</p>`}</div></div>
+      ${doing.length ? `<div class="chore-sec"><h3>⏳ In progress</h3><div class="chores">${doing.map(([c, e]) => row(c, "", kidColor(e.kid),
+        `<span class="tag" style="--c:${kidColor(e.kid)}">${esc(e.kid)} is on it</span>`,
+        `<button class="btn sm" data-act="chore-done">✅ Done!</button><button class="btn ghost sm" data-act="chore-drop">Put it back</button>`)).join("")}</div></div>` : ""}
+      <div class="chore-sec"><h3>✅ Done this week</h3><div class="chores">${done.map(([c, e]) => row({ ...c, points: e.points }, "done", kidColor(e.kid),
+        `<span class="tag" style="--c:${kidColor(e.kid)}">✓ ${esc(e.kid)}</span>`, `<button class="btn ghost sm" data-act="chore-undo">Undo</button>`)).join("")
+        || `<p class="empty">Nothing finished yet this week.</p>`}</div></div>`;
+  } else {
+    const done = data.log.filter(l => l.week === wk && l.status === "done");
+    body = `<div class="chore-sec"><h3>✅ Done that week</h3><div class="chores">${done.map(l => {
+        const c = data.chores.find(x => x.name.toLowerCase() === l.name.toLowerCase()) || { name: l.name, once: false };
+        return row({ ...c, points: l.points }, "done", kidColor(l.kid), `<span class="tag" style="--c:${kidColor(l.kid)}">✓ ${esc(l.kid)}</span>`, "");
+      }).join("") || `<p class="empty">No chores were finished that week.</p>`}</div></div>`;
+  }
+  el.innerHTML = `<div class="card">${scores}${body}<p class="small muted" style="margin-top:18px">Parents: change chores, points and how often in the
+    <a href="https://docs.google.com/spreadsheets/d/${CONFIG.mealSheet.id}/edit" target="_blank" rel="noopener">family sheet's <b>Chores</b> tab ↗</a>
+    (type <b>No</b> in the Active column to retire a chore).</p></div><p class="small" id="chMsg" role="status"></p>`;
+}
+async function choreAction(btn, kid, status) {
+  const name = btn.closest("[data-chore]").dataset.chore, msg = $("#chMsg");
+  btn.closest(".chore").querySelectorAll("button").forEach(b => b.disabled = true);
+  try { await setChore(name, kid, status); await renderChores(); }
+  catch (e) {
+    if (e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again.");
+    await renderChores().catch(() => {});
+    const m = $("#chMsg"); if (m) m.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message);
+  }
+}
+function openAddChore() {
+  if (MODE === "claude" || !tokenValid()) return addEventNotice("➕ Add a chore", "Sign in on the family site to add chores.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
+  const m = $("#modal"); m.style.setProperty("--c", "var(--accent)");
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">⭐ Add a chore</h3>
+    <form class="addev" novalidate>
+      <label>Chore<input name="name" required maxlength="120" placeholder="e.g. Sweep the back porch"></label>
+      <div class="two"><label>Points<input name="points" type="number" min="1" max="100" value="5"></label>
+        <label>How often<select name="often" style="font:inherit;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff"><option>Weekly</option><option>One-time</option></select></label></div>
+      <p class="err" role="alert"></p>
+      <div class="row"><button class="btn" type="submit">➕ Add chore</button><button class="btn ghost" type="button" data-act="close">Cancel</button></div>
+    </form>`;
+  const f = m.querySelector("form");
+  f.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    const name = f.name.value.trim(), pts = Math.round(Number(f.points.value)), err = f.querySelector(".err"), b = f.querySelector("button[type=submit]");
+    if (!name) { err.textContent = "Give the chore a name."; return; }
+    if (!(pts > 0)) { err.textContent = "Points should be 1 or more."; return; }
+    b.disabled = true; b.textContent = "Adding…";
+    try {
+      const { chores } = await loadChoreData();
+      if (chores.some(c => c.name.toLowerCase() === name.toLowerCase())) throw new Error("That chore is already on the list.");
+      await sheetsApi("/values/" + encodeURIComponent(tabRange(CONFIG.mealSheet.choresTab, "A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+        { method: "POST", body: JSON.stringify({ values: [[name, pts, f.often.value, "Yes"]] }) });
+      closeModal(); choreWeek = mondayOf(new Date()); renderChores();
+    } catch (e) { err.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message); b.disabled = false; b.textContent = "➕ Add chore"; }
+  });
+  $("#modalBg").classList.add("open"); f.name.focus();
+}
+$("#chPrev").onclick = () => { choreWeek = addDays(choreWeek || mondayOf(new Date()), -7); renderChores(); };
+$("#chNext").onclick = () => { const n = addDays(choreWeek || mondayOf(new Date()), 7); if (n <= mondayOf(new Date())) { choreWeek = n; renderChores(); } };
+$("#chToday").onclick = () => { choreWeek = mondayOf(new Date()); renderChores(); };
+
 /* ---------- Kids ---------- */
 function noSchoolSet() {
   const s = new Set();
@@ -1265,17 +1487,32 @@ function renderKidStatic(id) {
       </div>
       <div class="card"><h2>🔗 School resources</h2><div class="links">${CONFIG.schoolResources.map(l =>
         `<a class="biglink" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="em">${l.emoji}</span>${esc(l.label)}</a>`).join("")}</div></div>
+      <div class="card"><h2>⭐ Chore points this week</h2><div class="kid-chores"><span class="spinner"></span></div>
+        <div class="row" style="margin-top:10px"><a class="btn sm" href="#chores">Pick a chore</a></div></div>
       <div class="card"><h2>🏫 Upcoming school events</h2><div class="kid-school">${statusBlock() || '<span class="spinner"></span>'}</div></div>
     </div>`;
 }
 async function renderKid(id) {
   renderKidStatic(id);
+  kidChorePoints(id);
   if (state.status !== "ready") return;
   const today = startOfDay(new Date());
   const evs = remember(await eventsBetween(today, addDays(today, 21))).filter(e => e.cal.category === "ISD" || e.cal.category === "Parent Square");
   const el = $("#page-" + id + " .kid-school");
   el.innerHTML = evs.length ? `<div class="ev-list">${evs.slice(0, 10).map(e => evButton(e, { showDate: true })).join("")}</div>`
     : `<p class="empty">No school calendar events in the next three weeks.</p>`;
+}
+
+async function kidChorePoints(id) {
+  const el = $("#page-" + id + " .kid-chores"); if (!el) return;
+  if (MODE === "claude" || !tokenValid()) { el.innerHTML = `<p class="empty">Sign in on the family site to see chore points.</p>`; return; }
+  try {
+    const { log } = await loadChoreData(), wk = ymd(mondayOf(new Date())), name = CONFIG.kids[id].name;
+    const t = weekTotals(log, wk)[name] || { pts: 0, n: 0 };
+    const doing = log.filter(l => l.week === wk && l.kid === name && l.status === "claimed").length;
+    el.innerHTML = `<div class="count" style="grid-template-columns:repeat(2,1fr)"><div><b>${t.pts}</b><small>points</small></div><div><b>${t.n}</b><small>chores done</small></div></div>
+      ${doing ? `<p class="small muted" style="margin:6px 0 0">⏳ ${doing} chore${doing > 1 ? "s" : ""} in progress</p>` : ""}`;
+  } catch (e) { el.innerHTML = `<p class="empty">Chore points couldn't load.</p>`; }
 }
 
 /* ---------- Embeds (Groceries + Bulletin Board) ---------- */
@@ -1507,11 +1744,11 @@ function closeModal() { $("#modalBg").classList.remove("open"); pendingAdd = nul
 /* =====================================================================
    ROUTING + EVENTS
    ===================================================================== */
-const PAGES = ["home", "week", "calendar", "meals", "graham", "holden", "board"];
+const PAGES = ["home", "week", "calendar", "meals", "chores", "graham", "holden", "board"];
 function current() { const h = (location.hash || "").slice(1); return PAGES.includes(h) ? h : "home"; }
 function renderCurrent() {
   const p = current();
-  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
+  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, chores: renderChores, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
   if (run) Promise.resolve(run()).then(setSync).catch(err => {
     if (err && err.auth) { gToken = null; return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar."); }
     setStatus("error", MODE === "claude" ? mcpErrorText(err) : (err.message || "Couldn't load events."));
@@ -1541,6 +1778,12 @@ document.addEventListener("click", ev => {
   if (t.dataset.ev) return openEvent(t.dataset.ev);
   if (t.dataset.act === "close") return closeModal();
   if (t.dataset.act === "add-event") return openAddEvent();
+  if (t.dataset.act === "add-chore") return openAddChore();
+  if (t.dataset.act === "chore-claim") return choreAction(t, t.dataset.kid, "claimed");
+  if (t.dataset.act === "chore-done") return choreAction(t, "", "done");
+  if (t.dataset.act === "chore-undo") return choreAction(t, "", "claimed");
+  if (t.dataset.act === "chore-drop") return choreAction(t, "", null);
+  if (t.dataset.act === "retry-chores") { choreTabsOk = false; return renderChores(); }
   if (t.dataset.act === "hide-ev") return runHide(t, e => hideEvent(e, false));
   if (t.dataset.act === "hide-series") return runHide(t, e => hideEvent(e, true));
   if (t.dataset.act === "unhide-ev") return runHide(t, unhideEvent);
