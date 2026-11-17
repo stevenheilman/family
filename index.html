@@ -1375,7 +1375,7 @@ async function saveAvatar(name, emoji, pic) {
 }
 function openAvatarPicker(name) {
   if (MODE === "claude" || !tokenValid()) return addEventNotice("Choose an avatar", "Sign in on the family site to change avatars.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
-  const m = $("#modal"); m.style.setProperty("--c", "var(--accent)");
+  const m = modalBegin(); m.style.setProperty("--c", "var(--accent)");
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
     <h3 id="mTitle">Choose ${esc(name)}'s avatar</h3>
     <div class="avpick-now"><span class="avatar big">${avatarInner(name)}</span><span class="small muted">Tap an emoji, or upload a picture.</span></div>
@@ -1640,11 +1640,13 @@ async function choreAction(btn, kid, status) {
 function openChoreEditor(name) {
   if (MODE === "claude" || !tokenValid()) return addEventNotice("⭐ Chores", "Sign in on the family site to change chores.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
   if (!isChoreAdmin()) return addEventNotice("⭐ Chores", "Ask Mom or Dad to add or change chores.", "");
-  const m = $("#modal"); m.style.setProperty("--c", "var(--accent)");
+  const m = modalBegin(); m.style.setProperty("--c", "var(--accent)");
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">${name ? "✏️ Change chore" : "⭐ Add a chore"}</h3>
     <p class="muted"><span class="spinner"></span> Loading…</p>`;
   $("#modalBg").classList.add("open");
+  const seq = modalSeq;
   loadChoreData().then(({ chores, retired }) => {
+    if (!modalStillMine(seq)) return;   // closed or replaced while loading
     const c = name ? [...chores, ...retired].find(x => x.name.toLowerCase() === name.toLowerCase()) : null;
     if (name && !c) { m.querySelector("p").textContent = "That chore isn't in the list anymore."; return; }
     const v = c || { name: "", points: 5, freq: "weekly", active: true };
@@ -1684,7 +1686,11 @@ function openChoreEditor(name) {
       } catch (e) { fail(e); }
     });
     f.elements.name.focus();
-  }).catch(e => { if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); } m.querySelector("p").textContent = "⚠️ " + e.message; });
+  }).catch(e => {
+    if (!modalStillMine(seq)) return;
+    if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
+    m.querySelector("p").textContent = "⚠️ " + e.message;
+  });
 }
 async function saveChore(oldName, v) {
   const t = CONFIG.choresSheet;
@@ -1878,7 +1884,7 @@ async function unhideEvent(e) {
   state.hiddenEv = await readHiddenRows();
 }
 async function runHide(btn, fn) {
-  const key = $("#modal").dataset.ev, e = evIndex.get(key); if (!e) return;
+  const key = $("#modal").dataset.openEv, e = evIndex.get(key); if (!e) return;
   const note = $("#modal .hidenote"); btn.disabled = true; note.textContent = "Saving…";
   try { await fn(e); closeModal(); renderAll(); }
   catch (err) {
@@ -1907,7 +1913,7 @@ let pendingAdd = null;   // form values to restore after a permission prompt
 const familyCalId = () => Object.keys(CONFIG.calendars).find(id => CONFIG.calendars[id].category === "Family Events");
 const canWrite = () => !!(gToken && gToken.scope && gToken.scope.split(" ").includes(CAL_WRITE_SCOPE));
 function addEventNotice(title, body, btn) {
-  const m = $("#modal"); m.style.setProperty("--c", CAT_COLORS["Family Events"]);
+  const m = modalBegin(); m.style.setProperty("--c", CAT_COLORS["Family Events"]);
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">${title}</h3><p>${body}</p>${btn ? `<div class="row">${btn}</div>` : ""}`;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
@@ -1922,7 +1928,7 @@ function openAddEvent(prefill = {}) {
   const def = prefill.date || ymd(current() === "calendar" ? selectedDay : new Date());
   const v = { title: "", date: def, start: "18:00", end: "19:00", allDay: false, location: "", notes: "", ...prefill };
   if (!v.endDate || v.endDate < v.date) v.endDate = v.date;
-  const m = $("#modal"); m.style.setProperty("--c", CAT_COLORS["Family Events"]);
+  const m = modalBegin(); m.style.setProperty("--c", CAT_COLORS["Family Events"]);
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
     <span class="tag" style="--c:${CAT_COLORS["Family Events"]}">${CAT_EMOJI["Family Events"]} Family calendar</span>
     <h3 id="mTitle" style="margin-top:10px">Add an event</h3>
@@ -2011,7 +2017,7 @@ function openEvent(key) {
     : sameDay(e.start, e.end) || e.end - e.start < 1000
       ? `${fmt(e.start, { weekday: "long", month: "long", day: "numeric" })} · ${fmtTime(e.start)} – ${fmtTime(e.end)}`
       : `${fmt(e.start, { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(e.start)} – ${fmt(e.end, { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(e.end)}`;
-  const m = $("#modal"); m.style.setProperty("--c", colorOf(e)); m.dataset.ev = key;
+  const m = modalBegin(); m.style.setProperty("--c", colorOf(e)); m.dataset.openEv = key;
   const canHide = MODE === "google" && e.cal.category !== "Family Events" && e.cal.category !== "Personal Events";
   const hidRow = !canHide ? "" : e.hiddenEv
     ? `<div class="row" style="margin-top:10px"><span class="small muted">🙈 Hidden from the family site.</span><button class="btn ghost sm" data-act="unhide-ev">👁️ Show this event again</button><span class="small muted hidenote"></span></div>`
@@ -2029,7 +2035,11 @@ function openEvent(key) {
     `;
   $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
 }
-function closeModal() { $("#modalBg").classList.remove("open"); pendingAdd = null; }
+function closeModal() { $("#modalBg").classList.remove("open"); delete $("#modal").dataset.openEv; modalSeq++; pendingAdd = null; }
+/* Start a fresh pop-up: forget which event was open and invalidate any pop-up still loading in the background. */
+let modalSeq = 0;
+function modalBegin() { const m = $("#modal"); delete m.dataset.openEv; modalSeq++; return m; }
+const modalStillMine = seq => seq === modalSeq && $("#modalBg").classList.contains("open");
 
 /* =====================================================================
    ROUTING + EVENTS
