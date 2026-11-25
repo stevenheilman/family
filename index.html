@@ -173,9 +173,14 @@ section.page.active{display:block;animation:fade .25s ease}
 .week{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px}
 .wday{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px;min-height:180px;min-width:0;box-shadow:var(--shadow)}
 .wday.today{outline:3px solid var(--accent);outline-offset:-1px}
-.wday .dh{display:flex;align-items:baseline;gap:6px;margin-bottom:8px}
-.wday .dh b{font-family:var(--font-head);font-size:1.5rem}
-.wday .dh span{font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.wday{padding:0 0 10px;overflow:hidden}
+.wday > .ev-list{padding:0 10px}
+.wday .dh{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:10px;padding:10px 6px 8px;
+  background:color-mix(in srgb,var(--accent) 12%,var(--card));border-bottom:2px solid color-mix(in srgb,var(--accent) 35%,transparent)}
+.wday .dh b{font-family:var(--font-head);font-size:1.3rem;line-height:1.1;color:var(--accent);overflow-wrap:anywhere}
+.wday .dh span{font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+.wday.today .dh{background:var(--accent)}
+.wday.today .dh b,.wday.today .dh span{color:#fff}
 .wday .ev{flex-direction:column;gap:2px;padding:8px}
 .wday .ev .when{flex:none}
 @media (max-width:1060px){.week{grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}.wday{min-height:0}}
@@ -196,7 +201,7 @@ section.page.active{display:block;animation:fade .25s ease}
 .month{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--line);gap:1px}
 .month .dow{background:color-mix(in srgb,var(--accent) 10%,var(--card));text-align:center;font-weight:800;font-size:.76rem;
   text-transform:uppercase;letter-spacing:.08em;padding:8px 2px;color:var(--muted)}
-.mcell{background:var(--card);min-height:112px;padding:6px;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:3px;border:0;text-align:left;font:inherit;color:inherit}
+.mcell{background:var(--card);min-height:172px;padding:6px;min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:3px;border:0;text-align:left;font:inherit;color:inherit}
 .mcell.out{background:color-mix(in srgb,var(--card) 70%,var(--bg2));color:var(--muted)}
 .mcell.today .num{background:var(--accent);color:#fff}
 .mcell.sel{box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--accent) 60%,transparent)}
@@ -399,13 +404,13 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="tabs">☰ <span id="menuLabel">Menu</span></button>
     <nav class="tabs" id="tabs" aria-label="Sections">
       <a href="#home">🏠 Home</a>
-      <a href="#week">📅 Week at a Glance</a>
-      <a href="#calendar">📆 Family Calendar</a>
-      <a href="#meals">🍽️ Meal Plan &amp; Groceries</a>
+      <a href="#week">📅 WAG</a>
+      <a href="#calendar">📆 Calendar</a>
+      <a href="#meals">🍽️ Meals</a>
       <a href="#chores">⭐ Chores</a>
       <a href="#graham">🦉 Graham</a>
       <a href="#holden">🦊 Holden</a>
-      <a href="#board">📌 Bulletin Board</a>
+      <a href="#board">📌 Board</a>
       <a href="#christmas">🎄 Christmas</a>
     </nav>
   </div>
@@ -456,7 +461,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   </section>
 
   <!-- ===================================================== WEEK -->
-  <section class="page" id="page-week" data-title="📅 Week at a Glance">
+  <section class="page" id="page-week" data-title="📅 WAG">
     <div class="page-head">
       <div><h1>Week at a Glance</h1><p id="weekRange"></p></div>
       <div class="row">
@@ -472,7 +477,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   </section>
 
   <!-- ===================================================== CALENDAR -->
-  <section class="page" id="page-calendar" data-title="📆 Family Calendar">
+  <section class="page" id="page-calendar" data-title="📆 Calendar">
     <div class="page-head">
       <div><h1>Family Calendar</h1><p>Everything from the Google Family Calendar and its subscribed calendars.</p></div>
       <span class="sync" id="syncCal"></span>
@@ -493,7 +498,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   </section>
 
   <!-- ===================================================== MEALS -->
-  <section class="page" id="page-meals" data-title="🍽️ Meal Plan & Groceries">
+  <section class="page" id="page-meals" data-title="🍽️ Meals">
     <div class="page-head">
       <div><h1>Meal Plan &amp; Groceries</h1><p>What's cooking this week, and what we need from the store.</p></div>
       <a class="btn heb" id="hebBtn" target="_blank" rel="noopener">🛒 Open HEB Shopping List</a>
@@ -542,7 +547,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   <section class="page" id="page-holden" data-title="🦊 Holden"></section>
 
   <!-- ===================================================== BULLETIN BOARD -->
-  <section class="page" id="page-board" data-title="📌 Bulletin Board">
+  <section class="page" id="page-board" data-title="📌 Board">
     <div class="cork">
       <span class="pin" style="top:10px;left:14px"></span>
       <span class="pin" style="top:10px;right:14px;background:radial-gradient(circle at 35% 35%,#8ac4ff,#1f5fae)"></span>
@@ -707,7 +712,7 @@ const parseYMD = s => { const [y,m,d] = s.split("-").map(Number); return new Dat
 const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 const sameDay = (a, b) => ymd(a) === ymd(b);
-const startOfWeek = d => addDays(startOfDay(d), -d.getDay());
+const startOfWeek = d => addDays(startOfDay(d), -((d.getDay() + 6) % 7));   // weeks start on Monday
 const fmt = (d, o) => new Intl.DateTimeFormat("en-US", o).format(d);
 const fmtTime = d => fmt(d, { hour: "numeric", minute: "2-digit" }).replace(":00", "").replace(" ", " ");
 const dayDiff = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / 864e5);
@@ -1239,7 +1244,7 @@ async function renderWeek() {
   const today = new Date();
   $("#weekGrid").innerHTML = `<div class="week">${[...Array(7)].map((_, i) => {
     const d = addDays(weekStart, i), list = onDay(evs, d);
-    return `<div class="wday ${sameDay(d, today) ? "today" : ""}"><div class="dh"><b>${d.getDate()}</b><span>${fmt(d, { weekday: "short" })}${sameDay(d, today) ? " · Today" : ""}</span></div>
+    return `<div class="wday ${sameDay(d, today) ? "today" : ""}"><div class="dh"><b>${fmt(d, { weekday: "long" })}</b><span>${fmt(d, { month: "short", day: "numeric" })}${sameDay(d, today) ? " · Today" : ""}</span></div>
       <div class="ev-list">${list.map(e => evButton(e, { day: d })).join("") || `<p class="empty small">Free day</p>`}</div></div>`;
   }).join("")}</div>`;
 }
@@ -1281,13 +1286,13 @@ async function renderMonth() {
   const gridEnd = addDays(startOfWeek(lastOfMonth), 7);
   const evs = remember(await eventsBetween(gridStart, gridEnd));
   const today = new Date();
-  let html = `<div class="month">${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => `<div class="dow">${d}</div>`).join("")}`;
+  let html = `<div class="month">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => `<div class="dow">${d}</div>`).join("")}`;
   for (let d = gridStart; d < gridEnd; d = addDays(d, 1)) {
     const list = onDay(evs, d), out = d.getMonth() !== monthCursor.getMonth();
     html += `<button class="mcell ${out ? "out" : ""} ${sameDay(d, today) ? "today" : ""} ${sameDay(d, selectedDay) ? "sel" : ""}" data-day="${ymd(d)}" aria-label="${fmt(d, { weekday: "long", month: "long", day: "numeric" })}, ${list.length} events">
       <span class="num">${d.getDate()}</span>
-      ${list.slice(0, 3).map(e => `<span class="pill${e.hiddenEv ? " hid" : ""}" style="--c:${colorOf(e)}">${e.allDay || !sameDay(e.start, d) ? "" : esc(fmtTime(e.start)) + " "}${esc(e.title)}</span>`).join("")}
-      ${list.length > 3 ? `<span class="more">+${list.length - 3} more</span>` : ""}
+      ${list.slice(0, 5).map(e => `<span class="pill${e.hiddenEv ? " hid" : ""}" style="--c:${colorOf(e)}">${e.allDay || !sameDay(e.start, d) ? "" : esc(fmtTime(e.start)) + " "}${esc(e.title)}</span>`).join("")}
+      ${list.length > 5 ? `<span class="more">+${list.length - 5} more</span>` : ""}
       <span class="dots">${list.slice(0, 5).map(e => `<i class="dot" style="--c:${colorOf(e)}"></i>`).join("")}</span></button>`;
   }
   $("#calBody").innerHTML = html + "</div>";
