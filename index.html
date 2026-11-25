@@ -8,7 +8,7 @@
 <meta name="referrer" content="no-referrer">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito:wght@400;600;700;800&family=Caveat:wght@600;700&family=Mountains+of+Christmas:wght@700&display=swap" rel="stylesheet">
 <style>
 /* ============================================================
    THEME TOKENS (overwritten per season by JS)
@@ -332,6 +332,57 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 .sticky-row{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-bottom:18px}
 .sticky{font-family:var(--font-hand);font-size:1.3rem;padding:10px 16px;background:#fff59d;box-shadow:0 4px 10px rgba(0,0,0,.2);transform:rotate(var(--r,-2deg));color:#4a3b10}
 
+/* ============================== CHRISTMAS LISTS */
+.xmas-banner{position:relative;overflow:hidden;border-radius:26px;padding:46px 24px 30px;margin-bottom:22px;text-align:center;color:#fff;
+  background:radial-gradient(120% 90% at 50% 0%,#2f7d4f 0%,#14532d 55%,#0b3a1f 100%);box-shadow:var(--shadow);border:4px solid #c8a24a}
+.xmas-lights{position:absolute;top:0;left:0;right:0;height:34px;display:flex;justify-content:space-around;padding:0 10px;
+  background:radial-gradient(60% 40px at 50% -14px,transparent 96%,#2b2b2b 97% 100%,transparent 101%) 0 0/70px 34px repeat-x}
+.xmas-lights i{width:11px;height:17px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;margin-top:12px;background:var(--b);
+  box-shadow:0 0 12px 3px var(--b);animation:twinkle 1.6s ease-in-out infinite alternate;animation-delay:var(--dl)}
+@keyframes twinkle{from{opacity:1}to{opacity:.35;box-shadow:0 0 3px 0 var(--b)}}
+.xmas-snow{position:absolute;inset:0;pointer-events:none}
+.xmas-snow span{position:absolute;top:-10%;color:#fff;opacity:.85;font-size:var(--s);animation:snowfall var(--d) linear infinite;animation-delay:var(--dl)}
+@keyframes snowfall{to{transform:translateY(360px) translateX(var(--x));opacity:.15}}
+@media (prefers-reduced-motion:reduce){.xmas-snow span,.xmas-lights i{animation:none}}
+.xmas-title{font-family:"Mountains of Christmas",var(--font-hand);font-size:clamp(2.4rem,7vw,4.2rem);font-weight:700;line-height:1;
+  margin:6px 0 8px;color:#fff6d8;text-shadow:0 3px 0 #b3262f,0 6px 14px rgba(0,0,0,.35);position:relative}
+.xmas-sub{position:relative;font-size:1.05rem;margin:0 auto;max-width:56ch;color:#e9f5ec}
+.xmas-count{position:relative;display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:8px 18px;border-radius:999px;
+  background:#b3262f;color:#fff;font-weight:800;font-size:1.02rem;box-shadow:0 3px 0 #7d141b}
+.xmas-grid{display:grid;gap:18px;grid-template-columns:repeat(4,minmax(0,1fr))}
+@media (max-width:1060px){.xmas-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:600px){.xmas-grid{grid-template-columns:1fr}}
+.xlist{position:relative;background:#fffdf7;border-radius:18px;box-shadow:var(--shadow);border:1px solid #ecdcc4;padding:0 0 14px;display:flex;flex-direction:column;min-width:0}
+.xlist::before{content:"";display:block;height:14px;border-radius:18px 18px 0 0;
+  background:repeating-linear-gradient(-45deg,#c8202f 0 12px,#fff 12px 24px)}
+.xlist:nth-child(even)::before{background:repeating-linear-gradient(-45deg,#1e7a46 0 12px,#fff 12px 24px)}
+.xlist .xh{text-align:center;padding:14px 12px 10px;border-bottom:2px dashed #ecdcc4;margin:0 14px 8px}
+.xlist .xh .em{font-size:2.4rem;line-height:1;display:block;margin-bottom:4px}
+.xlist .xh h2{font-family:"Mountains of Christmas",var(--font-hand);font-size:2rem;color:#b3262f;margin:0}
+.xlist:nth-child(even) .xh h2{color:#1e7a46}
+.xlist .xh small{font-weight:800;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:#8a7a62}
+.xlist ul{list-style:none;margin:0;padding:0 14px;flex:1}
+.xlist li{display:flex;align-items:flex-start;gap:8px;padding:8px 4px;border-bottom:1px solid #f3e8d6;overflow-wrap:anywhere}
+.xlist li::before{content:var(--orn,"🔴");font-size:.8rem;line-height:1.6;flex:none}
+.xlist li:nth-child(3n+2){--orn:"🟢"}
+.xlist li:nth-child(3n+3){--orn:"🟡"}
+.xlist li.top{background:#fff4d1;border-radius:10px}
+.xlist li.top::before{content:"⭐"}
+.xlist li .it{flex:1;min-width:0;font-weight:700}
+.xlist li .it a{display:inline-block;font-size:.78rem;font-weight:800;margin-left:6px;color:#1e7a46;text-decoration:none;
+  background:#e6f4ea;padding:1px 8px;border-radius:999px;white-space:nowrap}
+.xlist li .x{border:0;background:none;color:#b9a98f;cursor:pointer;font-size:1rem;padding:0 2px;line-height:1.4;opacity:.55}
+.xlist li .x:hover{opacity:1;color:#b3262f}
+.xlist .xempty{color:#8a7a62;font-style:italic;text-align:center;padding:14px 8px}
+.xlist form{display:flex;gap:6px;padding:10px 14px 0}
+.xlist form input{flex:1;min-width:0;font:inherit;font-size:.9rem;padding:8px 11px;border-radius:999px;border:1px solid #e2d3bb;background:#fff}
+.xlist form button{border:0;border-radius:999px;background:#b3262f;color:#fff;font-weight:800;padding:0 13px;cursor:pointer;font-size:1.1rem}
+.xlist:nth-child(even) form button{background:#1e7a46}
+.xlist .xnote{font-size:.78rem;color:#8a7a62;min-height:1em;padding:4px 16px 0}
+.xmas-help{margin-top:18px;text-align:center}
+body.xmas{background:radial-gradient(circle at 12% 18%,rgba(179,38,47,.07) 0 3px,transparent 4px) 0 0/46px 46px,
+  radial-gradient(circle at 70% 60%,rgba(30,122,70,.07) 0 3px,transparent 4px) 0 0/58px 58px,linear-gradient(180deg,#fdf6ec,#f6e9da)!important}
+body.xmas nav.tabs a[aria-current="page"]{background:#b3262f}
 footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center}
 </style>
 </head>
@@ -355,6 +406,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <a href="#graham">🦉 Graham</a>
       <a href="#holden">🦊 Holden</a>
       <a href="#board">📌 Bulletin Board</a>
+      <a href="#christmas">🎄 Christmas</a>
     </nav>
   </div>
 </header>
@@ -509,6 +561,18 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
     </div>
   </section>
 
+  <!-- ===================================================== CHRISTMAS LISTS -->
+  <section class="page" id="page-christmas" data-title="🎄 Christmas Lists">
+    <div class="xmas-banner">
+      <div class="xmas-lights" id="xmasLights" aria-hidden="true"></div>
+      <div class="xmas-snow" id="xmasSnow" aria-hidden="true"></div>
+      <h1 class="xmas-title">Our Christmas Wish Lists</h1>
+      <p class="xmas-sub">Dear Santa (and family)… here's what's on everyone's list this year! 🎁</p>
+      <div class="xmas-count" id="xmasCount"></div>
+    </div>
+    <div id="xmasLists"><span class="spinner"></span></div>
+  </section>
+
 </main>
 
 <footer>
@@ -557,8 +621,11 @@ const CONFIG = {
 
   /* Dinner plan: the family meal-plan Google Sheet.
      Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
-  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
-               hiddenTab: "Hidden Events" },   // events the family hid from the site (created automatically)
+  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan" },
+
+  /* Hidden events: the "Heilman Hidden Events" Google Sheet in the Family Hub folder.
+     Lists calendar events the family hid from the site (the calendars themselves aren't changed). */
+  hiddenEventsSheet: { id: "1U9pItf4pkAGoQM605h1mdY7bWULqmk7t_lAXY9v8-nY", tab: "Hidden Events" },
 
   /* Chores: the "Heilman Chores" Google Sheet in the Family Hub folder.
      Chores = chore list · Chore Log = who did what · Points = running totals (formulas)
@@ -566,6 +633,13 @@ const CONFIG = {
   choreAdmins: ["steven.heilman2.0@gmail.com", "tinarheilman@gmail.com"],   // who can add, edit and remove chores on the site
   choresSheet: { id: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", choresTab: "Chores", choreLogTab: "Chore Log",
                  pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },
+
+  /* Christmas Lists: the "Heilman Christmas Lists" Google Sheet in the Family Hub folder.
+     Row 1 = one family member per column (rename or add people right in the sheet); each cell below is one wish.
+     Put a link anywhere in a cell to show a 🔗 button; start a wish with * or ⭐ to mark it a top wish. */
+  christmas: { sheetId: "1QtQa-ZQSUbjTZN3apV0uUzeQA4yaZcZyqX0PT5BR3zg", tab: "Christmas Lists",
+               people: [ { name: "Steven", emoji: "🎅" }, { name: "Tina", emoji: "🤶" },
+                         { name: "Graham", emoji: "🦉" }, { name: "Holden", emoji: "🦊" } ] },
 
   links: {
     groceryForm:  "https://docs.google.com/forms/d/e/1FAIpQLSdRAnp_8KLG0Epxlb-eWuW3nB6prKEQcEIXRQFUPUbeWuLpvw/viewform?embedded=true",
@@ -1329,7 +1403,7 @@ $("#dinPrev").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()
 $("#dinNext").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()), 7); renderMeals(); };
 $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); };
 
-/* ---------- Chores (stored in the meal-plan Google Sheet) ----------
+/* ---------- Chores (stored in the Heilman Chores Google Sheet) ----------
    Tab "Chores":    A Chore · B Points · C How often (Weekly / One-time) · D Active (blank or Yes = shown; No = retired)
    Tab "Chores" column C (How often): Daily / Weekly / One-time · column E Priority (Yes = show at the top)
    Tab "Chore Log": A Week (Monday) · B Chore · C Kid · D Status (claimed / done) · E Points (incl. bonus) · F Updated · G Day · H Streak bonus
@@ -1834,19 +1908,137 @@ function renderEmbeds() {
 }
 
 /* =====================================================================
+   CHRISTMAS LISTS: one column per family member in the "Christmas Lists"
+   tab of the family Google Sheet. Anyone signed in can add or remove wishes
+   here, or edit the sheet directly.
+   ===================================================================== */
+const xmasApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.christmas.sheetId);
+const xmasRange = cols => `'${CONFIG.christmas.tab}'!${cols}`;
+const colLetter = i => { let s = ""; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; };
+let xmasTabOk = false;
+function xmasDecor() {
+  const bulbs = ["#ff3b3b", "#ffd23f", "#3bd16f", "#3fa9ff", "#ff7ad9"];
+  $("#xmasLights").innerHTML = [...Array(18)].map((_, i) => `<i style="--b:${bulbs[i % bulbs.length]};--dl:${(i % 4) * .4}s"></i>`).join("");
+  $("#xmasSnow").innerHTML = [...Array(28)].map((_, i) =>
+    `<span style="left:${(i * 37) % 100}%;--s:${10 + (i * 7) % 14}px;--d:${7 + (i * 3) % 8}s;--dl:-${(i * 1.3) % 9}s;--x:${(i % 2 ? 1 : -1) * (10 + i % 20)}px">${i % 3 ? "❄" : "•"}</span>`).join("");
+}
+function xmasCountdown() {
+  const now = startOfDay(new Date());
+  let xmas = new Date(now.getFullYear(), 11, 25);
+  if (now > xmas) xmas = new Date(now.getFullYear() + 1, 11, 25);
+  const n = dayDiff(now, xmas);
+  $("#xmasCount").textContent = n === 0 ? "🎄 Merry Christmas! 🎄" : n === 1 ? "🎅 Just 1 more sleep until Christmas!" : `🎅 ${n} sleeps until Christmas!`;
+}
+async function ensureXmasTab() {
+  if (xmasTabOk) return;
+  const c = CONFIG.christmas;
+  const meta = await xmasApi("?fields=sheets.properties.title");
+  if (!(meta.sheets || []).some(sh => sh.properties.title === c.tab)) {
+    const r = await xmasApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title: c.tab, gridProperties: { frozenRowCount: 1 } } } }] }) });
+    const sid = r.replies[0].addSheet.properties.sheetId;
+    await xmasApi("/values/" + encodeURIComponent(xmasRange("A1:" + colLetter(c.people.length - 1) + "1")) + "?valueInputOption=RAW",
+      { method: "PUT", body: JSON.stringify({ values: [c.people.map(p => p.name)] }) });
+    await xmasApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [
+      { repeatCell: { range: { sheetId: sid, startRowIndex: 0, endRowIndex: 1 }, cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: .99, green: .9, blue: .9 } } }, fields: "userEnteredFormat(textFormat,backgroundColor)" } },
+      { updateDimensionProperties: { range: { sheetId: sid, dimension: "COLUMNS", startIndex: 0, endIndex: c.people.length }, properties: { pixelSize: 260 }, fields: "pixelSize" } }
+    ] }) });
+  }
+  xmasTabOk = true;
+}
+async function loadXmas() {
+  await ensureXmasTab();
+  const j = await xmasApi("/values/" + encodeURIComponent(xmasRange("A1:Z")) + "?majorDimension=COLUMNS");
+  return (j.values || []).map((col, i) => ({
+    name: String(col[0] || "").trim(), col: i,
+    items: col.slice(1).map((v, k) => ({ text: String(v || "").trim(), row: k + 2 })).filter(x => x.text)
+  })).filter(p => p.name);
+}
+function xmasItem(text) {
+  const url = (text.match(/https?:\/\/[^\s]+/) || [])[0] || "";
+  let label = text.replace(url, "").replace(/[\s\-–—:|]+$/, "").trim();
+  const top = /^(\*|⭐)/.test(label); label = label.replace(/^(\*|⭐)\s*/, "");
+  if (!label && url) { try { label = new URL(url).hostname.replace(/^www\./, ""); } catch { label = "Link"; } }
+  return { label, url, top };
+}
+function xmasNotice(e) {
+  const url = `https://docs.google.com/spreadsheets/d/${CONFIG.christmas.sheetId}/edit`;
+  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Christmas lists are saved in the Heilman Christmas Lists Google Sheet. Allow the site to use Google Sheets.
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="sheets-consent">✅ Allow</button></div></div>`;
+  if (e.kind === "access") return `<div class="notice warn"><b>No access to the Christmas lists</b>They live in the Heilman Christmas Lists Google Sheet. Ask a parent to share it with this Google account (as an editor).</div>`;
+  if (e.kind === "api") return `<div class="notice warn"><b>Google Sheets isn't turned on yet</b>In your Google Cloud project, search for <b>Google Sheets API</b> and click <b>Enable</b>.</div>`;
+  return `<div class="notice warn"><b>The Christmas lists couldn't load</b>${esc(e.message)}<div class="row" style="margin-top:10px"><button class="btn sm" data-act="retry-xmas">↻ Try again</button></div>
+    <p class="small"><a href="${url}" target="_blank" rel="noopener">Open the sheet ↗</a></p></div>`;
+}
+async function renderChristmas() {
+  xmasCountdown();
+  const el = $("#xmasLists");
+  if (MODE === "claude") { el.innerHTML = `<p class="empty">Christmas lists work on the family site (they're saved in the family's Google Sheet), not in this preview.</p>`; return; }
+  if (!CONFIG.googleClientId) { el.innerHTML = statusBlock(); return; }
+  if (!tokenValid()) { el.innerHTML = `<div class="notice"><b>Sign in to see everyone's wish lists</b>The lists are shared with the whole family through Google.
+    <div class="row" style="margin-top:10px"><button class="btn sm" data-act="signin">🔐 Sign in with Google</button></div></div>`; return; }
+  if (!el.querySelector(".xmas-grid")) el.innerHTML = `<p class="muted"><span class="spinner"></span> Checking the lists twice…</p>`;
+  let people;
+  try { people = await loadXmas(); }
+  catch (e) { if (e.auth) throw e; el.innerHTML = xmasNotice(e); return; }
+  const emojiFor = n => (CONFIG.christmas.people.find(p => p.name.toLowerCase() === n.toLowerCase()) || {}).emoji || "🎁";
+  const sheetUrl = `https://docs.google.com/spreadsheets/d/${CONFIG.christmas.sheetId}/edit`;
+  el.innerHTML = `<div class="xmas-grid">${people.map(p => `
+    <div class="xlist" data-xcol="${p.col}" data-xname="${esc(p.name)}">
+      <div class="xh"><span class="em">${emojiFor(p.name)}</span><h2>${esc(p.name)}</h2><small>${p.items.length} ${p.items.length === 1 ? "wish" : "wishes"}</small></div>
+      ${p.items.length ? `<ul>${p.items.map(it => { const x = xmasItem(it.text); return `<li class="${x.top ? "top" : ""}">
+        <span class="it">${esc(x.label)}${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener">🔗 link</a>` : ""}</span>
+        <button class="x" data-act="xmas-remove" data-row="${it.row}" data-text="${esc(it.text)}" title="Remove from ${esc(p.name)}'s list" aria-label="Remove ${esc(x.label)}">✕</button></li>`; }).join("")}</ul>`
+        : `<p class="xempty">No wishes yet… ✨</p>`}
+      <form data-xmas-add><input name="wish" placeholder="Add a wish or link…" aria-label="Add a wish to ${esc(p.name)}'s list" maxlength="300" required><button aria-label="Add">＋</button></form>
+      <div class="xnote"></div>
+    </div>`).join("")}</div>
+    <p class="small muted xmas-help">Tip: start a wish with ⭐ or * to make it a top wish. Edit everything in the <a href="${sheetUrl}" target="_blank" rel="noopener">Christmas Lists sheet ↗</a> (add a column to add a person).</p>`;
+}
+async function xmasWriteColumn(col, items, oldLen) {   // rewrite a person's column (rows 2+) in one step, so there are no gaps
+  const L = colLetter(col), n = Math.max(items.length, oldLen, 1);
+  const values = [...Array(n)].map((_, i) => [items[i] ?? ""]);
+  await xmasApi("/values/" + encodeURIComponent(xmasRange(`${L}2:${L}${n + 1}`)) + "?valueInputOption=RAW",
+    { method: "PUT", body: JSON.stringify({ values }) });
+}
+async function xmasChange(card, fn, busyMsg) {
+  const note = card.querySelector(".xnote"); note.textContent = busyMsg;
+  card.querySelectorAll("button,input").forEach(b => b.disabled = true);
+  try {
+    const people = await loadXmas();            // re-read so we don't overwrite someone else's change
+    const p = people.find(x => x.col === Number(card.dataset.xcol));
+    if (!p) throw new Error("That list isn't in the sheet anymore.");
+    const lastRow = p.items.length ? p.items[p.items.length - 1].row : 1;
+    await xmasWriteColumn(p.col, fn(p.items.map(i => i.text)), lastRow - 1);
+    await renderChristmas();
+  } catch (e) {
+    if (e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again.");
+    note.textContent = "⚠️ Didn't save: " + (e.kind === "scope" ? "Google Sheets permission needed" : e.kind === "access" ? "no access to the sheet" : e.message);
+    card.querySelectorAll("button,input").forEach(b => b.disabled = false);
+  }
+}
+document.addEventListener("submit", ev => {
+  const f = ev.target.closest("form[data-xmas-add]"); if (!f) return;
+  ev.preventDefault();
+  const wish = f.wish.value.trim(); if (!wish) return;
+  xmasChange(f.closest(".xlist"), items => [...items, wish], "Sending to the North Pole… 🛷");
+});
+xmasDecor();
+
+/* =====================================================================
    HIDDEN EVENTS: the family can hide events from linked calendars (school,
    Parent Square, teams...). The list is shared through the "Hidden Events"
-   tab of the meal-plan Google Sheet; Google Calendar itself is not changed.
+   tab of the "Heilman Hidden Events" Google Sheet; Google Calendar itself is not changed.
    Columns: A key · B event · C date · D hidden by.  A key is either
    "<calendarId>|<eventId>" (one event) or "series:<calendarId>|<seriesId>" (all repeats).
    ===================================================================== */
 function isEventHidden(e) {
   return state.hiddenEv.has(e.key) || (!!e.series && state.hiddenEv.has("series:" + e.series));
 }
-const hiddenRange = cols => `'${CONFIG.mealSheet.hiddenTab}'!${cols}`;
+const hiddenApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.hiddenEventsSheet.id);
+const hiddenRange = cols => `'${CONFIG.hiddenEventsSheet.tab}'!${cols}`;
 async function readHiddenRows() {
   try {
-    const j = await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A2:D")));
+    const j = await hiddenApi("/values/" + encodeURIComponent(hiddenRange("A2:D")));
     const m = new Map();
     (j.values || []).forEach((r, i) => { const k = String(r[0] || "").trim(); if (k) m.set(k, { title: r[1] || "", when: r[2] || "", by: r[3] || "", row: i + 2 }); });
     return m;
@@ -1860,10 +2052,10 @@ async function loadHiddenEvents() {
   catch (e) { if (e.auth) throw e; console.warn("Hidden events list couldn't load:", e.message); }
 }
 async function ensureHiddenTab() {
-  const meta = await sheetsApi("?fields=sheets.properties.title");
-  if ((meta.sheets || []).some(sh => sh.properties.title === CONFIG.mealSheet.hiddenTab)) return;
-  await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CONFIG.mealSheet.hiddenTab } } }] }) });
-  await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A1:D1")) + "?valueInputOption=RAW",
+  const meta = await hiddenApi("?fields=sheets.properties.title");
+  if ((meta.sheets || []).some(sh => sh.properties.title === CONFIG.hiddenEventsSheet.tab)) return;
+  await hiddenApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CONFIG.hiddenEventsSheet.tab } } }] }) });
+  await hiddenApi("/values/" + encodeURIComponent(hiddenRange("A1:D1")) + "?valueInputOption=RAW",
     { method: "PUT", body: JSON.stringify({ values: [["Key (used by the website)", "Event", "Date", "Hidden by"]] }) });
 }
 async function hideEvent(e, wholeSeries) {
@@ -1872,7 +2064,7 @@ async function hideEvent(e, wholeSeries) {
   const current = await readHiddenRows();
   if (!current.has(key)) {
     const by = (state.profile && state.profile.name) || "";
-    await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+    await hiddenApi("/values/" + encodeURIComponent(hiddenRange("A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
       { method: "POST", body: JSON.stringify({ values: [[key, e.title + (wholeSeries ? " (all repeats)" : ""), wholeSeries ? "every time" : ymd(e.start), by]] }) });
   }
   state.hiddenEv = await readHiddenRows();
@@ -1880,7 +2072,7 @@ async function hideEvent(e, wholeSeries) {
 async function unhideEvent(e) {
   const current = await readHiddenRows();
   const ranges = [e.key, e.series ? "series:" + e.series : ""].filter(k => k && current.has(k)).map(k => hiddenRange(`A${current.get(k).row}:D${current.get(k).row}`));
-  if (ranges.length) await sheetsApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges }) });
+  if (ranges.length) await hiddenApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges }) });
   state.hiddenEv = await readHiddenRows();
 }
 async function runHide(btn, fn) {
@@ -1891,7 +2083,7 @@ async function runHide(btn, fn) {
     if (err.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
     btn.disabled = false;
     note.textContent = "⚠️ Couldn't save: " + (err.kind === "scope" ? "the site needs permission to use Google Sheets (sign out and back in)." :
-      err.kind === "access" ? "this Google account can't edit the family meal-plan sheet, which stores the hidden list." : err.message);
+      err.kind === "access" ? "this Google account can't edit the Heilman Hidden Events sheet, which stores the hidden list." : err.message);
   }
 }
 
@@ -2044,11 +2236,11 @@ const modalStillMine = seq => seq === modalSeq && $("#modalBg").classList.contai
 /* =====================================================================
    ROUTING + EVENTS
    ===================================================================== */
-const PAGES = ["home", "week", "calendar", "meals", "chores", "graham", "holden", "board"];
+const PAGES = ["home", "week", "calendar", "meals", "chores", "graham", "holden", "board", "christmas"];
 function current() { const h = (location.hash || "").slice(1); return PAGES.includes(h) ? h : "home"; }
 function renderCurrent() {
   const p = current();
-  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, chores: renderChores, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
+  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, chores: renderChores, christmas: renderChristmas, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
   if (run) Promise.resolve(run()).then(setSync).catch(err => {
     if (err && err.auth) { gToken = null; return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar."); }
     setStatus("error", MODE === "claude" ? mcpErrorText(err) : (err.message || "Couldn't load events."));
@@ -2060,6 +2252,7 @@ function route() {
   document.querySelectorAll("section.page").forEach(s => s.classList.toggle("active", s.id === "page-" + p));
   document.querySelectorAll("nav.tabs a").forEach(a => { if (a.getAttribute("href") === "#" + p) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
   $("#menuLabel").textContent = $("#page-" + p).dataset.title;
+  document.body.classList.toggle("xmas", p === "christmas");
   $("#tabs").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false");
   document.title = `${$("#page-" + p).dataset.title.replace(/^\S+\s/, "")} · Family Command Center`;
   renderCurrent();
@@ -2099,6 +2292,15 @@ document.addEventListener("click", ev => {
   if (t.dataset.act === "signout") return signOut();
   if (t.dataset.act === "sheets-consent") return signIn({ consent: true }).catch(e => setStatus("error", e.message));
   if (t.dataset.act === "retry-meals") return renderMeals();
+  if (t.dataset.act === "retry-xmas") { xmasTabOk = false; return renderChristmas(); }
+  if (t.dataset.act === "xmas-remove") {
+    const text = t.dataset.text, card = t.closest(".xlist");
+    if (t.dataset.armed !== "1") {   // two taps to remove, so a stray tap doesn't delete a wish
+      t.dataset.armed = "1"; t.textContent = "Remove?"; t.style.opacity = 1; t.style.color = "#b3262f"; t.style.fontSize = ".78rem"; t.style.fontWeight = 800;
+      return setTimeout(() => { if (t.isConnected) { t.dataset.armed = ""; t.textContent = "✕"; t.removeAttribute("style"); } }, 3000);
+    }
+    return xmasChange(card, items => { const i = items.indexOf(text); if (i >= 0) items.splice(i, 1); return items; }, "Removing…");
+  }
   if (t.dataset.act === "showall" || t.dataset.act === "hideall") {
     state.hidden = new Set(t.dataset.act === "hideall" ? state.calendars.map(c => c.id) : []);
     store.set("hidden", [...state.hidden]); return renderMonth();
