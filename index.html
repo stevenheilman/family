@@ -621,8 +621,11 @@ const CONFIG = {
 
   /* Dinner plan: the family meal-plan Google Sheet.
      Tab "Meals" = go-to dinners for the dropdowns; tab "Plan" = the website saves each day's pick here. */
-  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan",
-               hiddenTab: "Hidden Events" },   // events the family hid from the site (created automatically)
+  mealSheet: { id: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", mealsTab: "Meals", planTab: "Plan" },
+
+  /* Hidden events: the "Heilman Hidden Events" Google Sheet in the Family Hub folder.
+     Lists calendar events the family hid from the site (the calendars themselves aren't changed). */
+  hiddenEventsSheet: { id: "1U9pItf4pkAGoQM605h1mdY7bWULqmk7t_lAXY9v8-nY", tab: "Hidden Events" },
 
   /* Chores: the "Heilman Chores" Google Sheet in the Family Hub folder.
      Chores = chore list · Chore Log = who did what · Points = running totals (formulas)
@@ -631,10 +634,10 @@ const CONFIG = {
   choresSheet: { id: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", choresTab: "Chores", choreLogTab: "Chore Log",
                  pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },
 
-  /* Christmas Lists: a tab in the family meal-plan Google Sheet (created automatically the first time).
+  /* Christmas Lists: the "Heilman Christmas Lists" Google Sheet in the Family Hub folder.
      Row 1 = one family member per column (rename or add people right in the sheet); each cell below is one wish.
      Put a link anywhere in a cell to show a 🔗 button; start a wish with * or ⭐ to mark it a top wish. */
-  christmas: { sheetId: "1Tr6Dc7Bcot3RbqNaNtJeJ8McD5VH7yUXL-Pc9eLMrnc", tab: "Christmas Lists",
+  christmas: { sheetId: "1QtQa-ZQSUbjTZN3apV0uUzeQA4yaZcZyqX0PT5BR3zg", tab: "Christmas Lists",
                people: [ { name: "Steven", emoji: "🎅" }, { name: "Tina", emoji: "🤶" },
                          { name: "Graham", emoji: "🦉" }, { name: "Holden", emoji: "🦊" } ] },
 
@@ -1400,7 +1403,7 @@ $("#dinPrev").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()
 $("#dinNext").onclick = () => { dinWeek = addDays(dinWeek || mondayOf(new Date()), 7); renderMeals(); };
 $("#dinToday").onclick = () => { dinWeek = mondayOf(new Date()); renderMeals(); };
 
-/* ---------- Chores (stored in the meal-plan Google Sheet) ----------
+/* ---------- Chores (stored in the Heilman Chores Google Sheet) ----------
    Tab "Chores":    A Chore · B Points · C How often (Weekly / One-time) · D Active (blank or Yes = shown; No = retired)
    Tab "Chores" column C (How often): Daily / Weekly / One-time · column E Priority (Yes = show at the top)
    Tab "Chore Log": A Week (Monday) · B Chore · C Kid · D Status (claimed / done) · E Points (incl. bonus) · F Updated · G Day · H Streak bonus
@@ -1959,9 +1962,9 @@ function xmasItem(text) {
 }
 function xmasNotice(e) {
   const url = `https://docs.google.com/spreadsheets/d/${CONFIG.christmas.sheetId}/edit`;
-  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Christmas lists are saved in the family Google Sheet. Allow the site to use Google Sheets.
+  if (e.kind === "scope") return `<div class="notice"><b>One more permission needed</b>Christmas lists are saved in the Heilman Christmas Lists Google Sheet. Allow the site to use Google Sheets.
     <div class="row" style="margin-top:10px"><button class="btn sm" data-act="sheets-consent">✅ Allow</button></div></div>`;
-  if (e.kind === "access") return `<div class="notice warn"><b>No access to the Christmas lists</b>They live in the family meal plan Google Sheet. Ask a parent to share it with this Google account (as an editor).</div>`;
+  if (e.kind === "access") return `<div class="notice warn"><b>No access to the Christmas lists</b>They live in the Heilman Christmas Lists Google Sheet. Ask a parent to share it with this Google account (as an editor).</div>`;
   if (e.kind === "api") return `<div class="notice warn"><b>Google Sheets isn't turned on yet</b>In your Google Cloud project, search for <b>Google Sheets API</b> and click <b>Enable</b>.</div>`;
   return `<div class="notice warn"><b>The Christmas lists couldn't load</b>${esc(e.message)}<div class="row" style="margin-top:10px"><button class="btn sm" data-act="retry-xmas">↻ Try again</button></div>
     <p class="small"><a href="${url}" target="_blank" rel="noopener">Open the sheet ↗</a></p></div>`;
@@ -2024,17 +2027,18 @@ xmasDecor();
 /* =====================================================================
    HIDDEN EVENTS: the family can hide events from linked calendars (school,
    Parent Square, teams...). The list is shared through the "Hidden Events"
-   tab of the meal-plan Google Sheet; Google Calendar itself is not changed.
+   tab of the "Heilman Hidden Events" Google Sheet; Google Calendar itself is not changed.
    Columns: A key · B event · C date · D hidden by.  A key is either
    "<calendarId>|<eventId>" (one event) or "series:<calendarId>|<seriesId>" (all repeats).
    ===================================================================== */
 function isEventHidden(e) {
   return state.hiddenEv.has(e.key) || (!!e.series && state.hiddenEv.has("series:" + e.series));
 }
-const hiddenRange = cols => `'${CONFIG.mealSheet.hiddenTab}'!${cols}`;
+const hiddenApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.hiddenEventsSheet.id);
+const hiddenRange = cols => `'${CONFIG.hiddenEventsSheet.tab}'!${cols}`;
 async function readHiddenRows() {
   try {
-    const j = await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A2:D")));
+    const j = await hiddenApi("/values/" + encodeURIComponent(hiddenRange("A2:D")));
     const m = new Map();
     (j.values || []).forEach((r, i) => { const k = String(r[0] || "").trim(); if (k) m.set(k, { title: r[1] || "", when: r[2] || "", by: r[3] || "", row: i + 2 }); });
     return m;
@@ -2048,10 +2052,10 @@ async function loadHiddenEvents() {
   catch (e) { if (e.auth) throw e; console.warn("Hidden events list couldn't load:", e.message); }
 }
 async function ensureHiddenTab() {
-  const meta = await sheetsApi("?fields=sheets.properties.title");
-  if ((meta.sheets || []).some(sh => sh.properties.title === CONFIG.mealSheet.hiddenTab)) return;
-  await sheetsApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CONFIG.mealSheet.hiddenTab } } }] }) });
-  await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A1:D1")) + "?valueInputOption=RAW",
+  const meta = await hiddenApi("?fields=sheets.properties.title");
+  if ((meta.sheets || []).some(sh => sh.properties.title === CONFIG.hiddenEventsSheet.tab)) return;
+  await hiddenApi(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CONFIG.hiddenEventsSheet.tab } } }] }) });
+  await hiddenApi("/values/" + encodeURIComponent(hiddenRange("A1:D1")) + "?valueInputOption=RAW",
     { method: "PUT", body: JSON.stringify({ values: [["Key (used by the website)", "Event", "Date", "Hidden by"]] }) });
 }
 async function hideEvent(e, wholeSeries) {
@@ -2060,7 +2064,7 @@ async function hideEvent(e, wholeSeries) {
   const current = await readHiddenRows();
   if (!current.has(key)) {
     const by = (state.profile && state.profile.name) || "";
-    await sheetsApi("/values/" + encodeURIComponent(hiddenRange("A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+    await hiddenApi("/values/" + encodeURIComponent(hiddenRange("A:D")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
       { method: "POST", body: JSON.stringify({ values: [[key, e.title + (wholeSeries ? " (all repeats)" : ""), wholeSeries ? "every time" : ymd(e.start), by]] }) });
   }
   state.hiddenEv = await readHiddenRows();
@@ -2068,7 +2072,7 @@ async function hideEvent(e, wholeSeries) {
 async function unhideEvent(e) {
   const current = await readHiddenRows();
   const ranges = [e.key, e.series ? "series:" + e.series : ""].filter(k => k && current.has(k)).map(k => hiddenRange(`A${current.get(k).row}:D${current.get(k).row}`));
-  if (ranges.length) await sheetsApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges }) });
+  if (ranges.length) await hiddenApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges }) });
   state.hiddenEv = await readHiddenRows();
 }
 async function runHide(btn, fn) {
@@ -2079,7 +2083,7 @@ async function runHide(btn, fn) {
     if (err.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
     btn.disabled = false;
     note.textContent = "⚠️ Couldn't save: " + (err.kind === "scope" ? "the site needs permission to use Google Sheets (sign out and back in)." :
-      err.kind === "access" ? "this Google account can't edit the family meal-plan sheet, which stores the hidden list." : err.message);
+      err.kind === "access" ? "this Google account can't edit the Heilman Hidden Events sheet, which stores the hidden list." : err.message);
   }
 }
 
