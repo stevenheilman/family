@@ -404,8 +404,9 @@ body.xmas nav.tabs a[aria-current="page"]{background:#b3262f}
 #sitebg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--bg1) 80%,transparent),color-mix(in srgb,var(--bg2) 88%,transparent))}
 body.has-photo{background:var(--bg2)}
 body.has-photo #sitebg{opacity:1}
-.hero-photo{position:absolute;inset:0;background-size:cover;background-position:center 30%;display:none}
-.hero-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.62) 100%)}
+.hero-photo{position:absolute;inset:0;display:none;overflow:hidden}
+.hero-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.hero-photo::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.62) 100%)}
 body.has-photo .hero{min-height:clamp(300px,46vw,480px);display:flex;align-items:flex-end;color:#fff}
 body.has-photo .hero-photo{display:block}
 body.has-photo .hero .deco,body.has-photo .hero .wave{display:none}
@@ -420,6 +421,26 @@ body.has-photo .hero h1,body.has-photo .hero p{text-shadow:0 2px 10px rgba(0,0,0
 .pcell small{display:block;padding:4px 6px;font-size:.7rem;background:var(--card);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcell button{position:absolute;top:6px;border:0;border-radius:999px;min-width:32px;height:32px;padding:0 8px;cursor:pointer;font-weight:800;font-size:1rem;
   background:rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+body.has-photo .hero > div:not(.hero-photo):not(.deco){z-index:2}
+body.has-photo.hero-short .hero{min-height:clamp(220px,30vw,320px)}
+body.has-photo.hero-tall .hero{min-height:clamp(420px,62vw,640px)}
+.pcell .pcrop{left:50%;transform:translateX(-50%);font-size:.85rem}
+.modal.wide{max-width:820px}
+.crop-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:start}
+@media (max-width:640px){.crop-wrap{grid-template-columns:1fr}}
+.crop-full{position:relative;touch-action:none;cursor:crosshair;border-radius:12px;overflow:hidden;background:#000;user-select:none;-webkit-user-select:none}
+.crop-full img{display:block;width:100%;max-height:52vh;object-fit:contain;pointer-events:none}
+.crop-dot{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px rgba(0,0,0,.5),0 0 0 9999px rgba(0,0,0,.18);pointer-events:none}
+.crop-previews{display:grid;grid-template-columns:2.4fr 1fr;gap:10px;align-items:start}
+.crop-previews small{display:block;font-weight:800;color:var(--muted);margin-bottom:4px}
+.crop-prev{position:relative;overflow:hidden;border-radius:12px;background:#000;width:100%}
+.crop-prev img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.crop-prev::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,.55))}
+.crop-ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-weight:800;font-size:.9rem;margin-top:12px}
+.crop-ctl input[type=range]{flex:1;min-width:140px;accent-color:var(--accent)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:var(--card);padding:7px 14px;font-weight:800;cursor:pointer;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 .pcell .pstar{left:6px}.pcell .pdel{right:6px;font-size:.85rem;color:#a23b1c}
 
 /* ============================== TO DO */
@@ -505,7 +526,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   <!-- ===================================================== HOME -->
   <section class="page" id="page-home" data-title="🏠 Home">
     <div class="hero" id="hero">
-      <div class="hero-photo" id="heroPhoto" aria-hidden="true"></div>
+      <div class="hero-photo" id="heroPhoto" aria-hidden="true"><img alt=""></div>
       <button class="hero-photo-btn" data-act="photos" title="Add family photos or choose the background">📷 Photos</button>
       <div class="deco" id="deco" aria-hidden="true"></div>
       <div style="position:relative">
@@ -730,18 +751,19 @@ const CONFIG = {
   choresSheet: { id: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", choresTab: "Chores", choreLogTab: "Chore Log",
                  pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },
 
-  /* To Do lists: the "To Do" tab (created automatically) in the Heilman Chores sheet.
+  /* To Do lists: the "Heilman To Do" Google Sheet in the Family Hub folder ("To Do" tab).
      people = whose lists show on the To Do page, in this order. */
-  todo: { sheetId: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", tab: "To Do",
+  todo: { sheetId: "1FGKGyLY-Dllg9KJcdo3nh5YlX5XCSCsp8K4ut5M1E2M", tab: "To Do",
           people: [ { name: "Family", label: "Family / House", emoji: "🏡" },
                     { name: "Steven", label: "Dad", emoji: "👨", email: "steven.heilman2.0@gmail.com" },
                     { name: "Tina", label: "Mom", emoji: "👩", email: "tinarheilman@gmail.com" },
                     { name: "Graham", emoji: "🦉", email: "graham.cv.heilman@gmail.com" },
                     { name: "Holden", emoji: "🦊", email: "holden.p.heilman@gmail.com" } ] },
 
-  /* Family photos: the "Photos" tab (created automatically) in the Heilman Chores sheet.
+  /* Family photos: the "Heilman Family Photos" Google Sheet in the Family Hub folder.
+     Photos tab = the pictures · Photo Settings tab = how each one is framed (focus, zoom, banner height).
      Anyone in the family can upload; starred photos become the site background. */
-  photos: { sheetId: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", tab: "Photos" },
+  photos: { sheetId: "1ay9DWv2RinaUduNtLcpfJZRy80iV8EWFCOcTQP5WXBU", tab: "Photos", settingsTab: "Photo Settings" },
 
   /* Christmas Lists: the "Heilman Christmas Lists" Google Sheet in the Family Hub folder.
      Row 1 = one family member per column (rename or add people right in the sheet); each cell below is one wish.
@@ -2350,7 +2372,7 @@ function openEvent(key) {
 function closeModal() { $("#modalBg").classList.remove("open"); delete $("#modal").dataset.openEv; modalSeq++; pendingAdd = null; }
 /* Start a fresh pop-up: forget which event was open and invalidate any pop-up still loading in the background. */
 let modalSeq = 0;
-function modalBegin() { const m = $("#modal"); delete m.dataset.openEv; modalSeq++; return m; }
+function modalBegin() { const m = $("#modal"); m.classList.remove("wide"); delete m.dataset.openEv; modalSeq++; return m; }
 const modalStillMine = seq => seq === modalSeq && $("#modalBg").classList.contains("open");
 
 /* =====================================================================
@@ -2614,9 +2636,11 @@ function fitImage(file, max, limit) {   // shrink to fit max×max as a JPEG no l
 async function uploadPhoto(file, asBackground) {
   const [full, thumb] = await Promise.all([fitImage(file, 1800, PCHUNK * PMAXCELLS), fitImage(file, 360, PCHUNK)]);
   const parts = []; for (let i = 0; i < full.length; i += PCHUNK) parts.push(full.slice(i, i + PCHUNK));
-  const row = [newId(), myName(), ymd(new Date()), String((state.profile && state.profile.email) || ""), asBackground ? "Yes" : "", thumb, ...parts];
+  const id = newId();
+  const row = [id, myName(), ymd(new Date()), String((state.profile && state.profile.email) || ""), asBackground ? "Yes" : "", thumb, ...parts];
   await photoApi("/values/" + encodeURIComponent(tabRange(CONFIG.photos.tab, "A:Z")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
     { method: "POST", body: JSON.stringify({ values: [row] }) });
+  return id;
 }
 async function photoChange(id, fn) {
   const list = await loadPhotoList(), p = list.find(x => x.id === id);   // re-read so we change the right row
@@ -2628,29 +2652,106 @@ const photoSetBg = (id, on) => photoChange(id, p => photoApi("/values/" + encode
 const photoDelete = id => photoChange(id, p => photoApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(CONFIG.photos.tab, `A${p.row}:Z${p.row}`)] }) }));
 const canDeletePhoto = p => isParent() || (p.email && p.email === String((state.profile && state.profile.email) || "").toLowerCase());
 
-function applyBackground(src) {
-  document.body.classList.toggle("has-photo", !!src);
+/* ---------- Photo framing: what part of each photo shows, how zoomed in, and how tall the banner is.
+   Saved in the "Photo Settings" tab: A Photo ID · B Focus left-right % · C Focus up-down % · D Zoom · E Banner height ---------- */
+const CROP_HEAD = ["Photo ID", "Focus left-right (%)", "Focus up-down (%)", "Zoom (1 = fit)", "Banner height (Short / Medium / Tall)"];
+const CROP_DEFAULT = { x: 50, y: 35, z: 1, h: "Medium" };
+const HERO_H = { Short: { desk: 320, phone: 220 }, Medium: { desk: 480, phone: 300 }, Tall: { desk: 640, phone: 420 } };
+let cropTabOk = false;
+const clampN = (v, lo, hi, d) => { const n = Number(v); return isFinite(n) && String(v).trim() !== "" ? Math.min(hi, Math.max(lo, n)) : d; };
+async function loadCrops() {
+  if (!cropTabOk) { await ensureTab(photoApi, CONFIG.photos.settingsTab, CROP_HEAD); cropTabOk = true; }
+  const j = await photoApi("/values/" + encodeURIComponent(tabRange(CONFIG.photos.settingsTab, "A2:E")) + "?valueRenderOption=UNFORMATTED_VALUE");
+  const map = new Map();
+  (j.values || []).forEach((r, i) => { const id = String(r[0] || "").trim(); if (!id) return;
+    const h = String(r[4] || "").trim().replace(/^./, c => c.toUpperCase());
+    map.set(id, { x: clampN(r[1], 0, 100, CROP_DEFAULT.x), y: clampN(r[2], 0, 100, CROP_DEFAULT.y), z: clampN(r[3], 1, 3, 1), h: HERO_H[h] ? h : "Medium", row: i + 2 }); });
+  return map;
+}
+async function saveCrop(id, c) {
+  const map = await loadCrops(), cur = map.get(id), t = CONFIG.photos.settingsTab;
+  const row = [id, Math.round(c.x), Math.round(c.y), Math.round(c.z * 100) / 100, c.h];
+  if (cur) await photoApi("/values/" + encodeURIComponent(tabRange(t, `A${cur.row}:E${cur.row}`)) + "?valueInputOption=RAW", { method: "PUT", body: JSON.stringify({ values: [row] }) });
+  else await photoApi("/values/" + encodeURIComponent(tabRange(t, "A:E")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", { method: "POST", body: JSON.stringify({ values: [row] }) });
+}
+function frameImg(img, c) {   // fill the box, keep the focus point in view, zoom around it
+  img.style.objectPosition = `${c.x}% ${c.y}%`;
+  img.style.transformOrigin = `${c.x}% ${c.y}%`;
+  img.style.transform = c.z > 1 ? `scale(${c.z})` : "";
+}
+async function openCropper(id, onDone) {
+  let list, crops;
+  try { [list, crops] = await Promise.all([loadPhotoList(), loadCrops()]); } catch (e) { return addEventNotice("✂️ Adjust photo", esc(e.message), ""); }
+  const p = list.find(x => x.id === id); if (!p) return;
+  const c = { ...CROP_DEFAULT, ...(crops.get(id) || {}) };
+  const m = modalBegin(); m.style.setProperty("--c", "var(--accent)"); m.classList.add("wide");
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">✂️ Adjust photo</h3>
+    <p class="small muted" style="margin:0 0 10px">Tap or drag on the photo to mark what matters most (like everyone's faces). The previews show how it will look.</p>
+    <div class="crop-wrap">
+      <div class="crop-full" title="Tap or drag to choose the focus"><img alt="Photo to adjust" src="${esc(p.thumb)}"><span class="crop-dot"></span></div>
+      <div class="crop-previews">
+        <div><small>💻 Computer</small><div class="crop-prev" data-prev="desk"><img alt="" src="${esc(p.thumb)}"></div></div>
+        <div><small>📱 Phone</small><div class="crop-prev phone" data-prev="phone"><img alt="" src="${esc(p.thumb)}"></div></div>
+      </div>
+    </div>
+    <label class="crop-ctl">🔍 Zoom <input type="range" min="1" max="2.5" step="0.05" value="${c.z}" data-zoom aria-label="Zoom"></label>
+    <div class="crop-ctl">↕️ Banner height <span class="seg">${Object.keys(HERO_H).map(h => `<button type="button" data-h="${h}" aria-pressed="${h === c.h}">${h}</button>`).join("")}</span></div>
+    <p class="err small" role="alert" style="color:#a23b1c;min-height:1em;margin:8px 0"></p>
+    <div class="row"><button class="btn" type="button" data-save>💾 Save</button><button class="btn ghost" type="button" data-reset>↺ Reset</button><button class="btn ghost" type="button" data-act="close">Cancel</button></div>`;
+  $("#modalBg").classList.add("open");
+  const full = m.querySelector(".crop-full"), dot = m.querySelector(".crop-dot"), err = m.querySelector(".err");
+  const draw = () => {
+    dot.style.left = c.x + "%"; dot.style.top = c.y + "%";
+    m.querySelectorAll(".crop-prev").forEach(box => {
+      const k = box.dataset.prev, w = k === "desk" ? 1200 : 360;
+      box.style.aspectRatio = `${w} / ${HERO_H[c.h][k]}`;
+      frameImg(box.querySelector("img"), c);
+    });
+    m.querySelectorAll("[data-h]").forEach(b => b.setAttribute("aria-pressed", b.dataset.h === c.h));
+  };
+  const pick = ev => { const r = full.querySelector("img").getBoundingClientRect();
+    c.x = Math.min(100, Math.max(0, (ev.clientX - r.left) / r.width * 100)); c.y = Math.min(100, Math.max(0, (ev.clientY - r.top) / r.height * 100)); draw(); };
+  full.addEventListener("pointerdown", ev => { ev.preventDefault(); full.setPointerCapture(ev.pointerId); pick(ev); full.onpointermove = pick; });
+  full.addEventListener("pointerup", () => { full.onpointermove = null; });
+  m.querySelector("[data-zoom]").oninput = ev => { c.z = Number(ev.target.value); draw(); };
+  m.querySelectorAll("[data-h]").forEach(b => b.onclick = () => { c.h = b.dataset.h; draw(); });
+  m.querySelector("[data-reset]").onclick = () => { Object.assign(c, CROP_DEFAULT); m.querySelector("[data-zoom]").value = 1; draw(); };
+  m.querySelector("[data-save]").onclick = async ev => {
+    const b = ev.target; b.disabled = true; b.textContent = "Saving…";
+    try { await saveCrop(id, c); closeModal(); m.classList.remove("wide"); await refreshBackground(true); if (onDone) onDone(); }
+    catch (e) { if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
+      err.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family photos sheet." : e.message); b.disabled = false; b.textContent = "💾 Save"; }
+  };
+  draw();
+  loadPhotoFull(p.row).then(src => { if (src.startsWith("data:image")) m.querySelectorAll(".crop-full img,.crop-prev img").forEach(i => i.src = src); }).catch(() => {});
+}
+function applyBackground(src, crop) {
+  const c = { ...CROP_DEFAULT, ...(crop || {}) }, b = document.body, img = $("#heroPhoto img");
+  b.classList.toggle("has-photo", !!src);
+  b.classList.toggle("hero-short", !!src && c.h === "Short"); b.classList.toggle("hero-tall", !!src && c.h === "Tall");
   $("#sitebg").style.backgroundImage = src ? `url("${src}")` : "";
-  $("#heroPhoto").style.backgroundImage = src ? `url("${src}")` : "";
+  $("#sitebg").style.backgroundPosition = `${c.x}% ${c.y}%`;
+  if (src) { if (img.getAttribute("src") !== src) img.src = src; frameImg(img, c); } else img.removeAttribute("src");
 }
 async function refreshBackground() {
   if (MODE === "claude" || !tokenValid()) return;
   try {
-    const bgs = (await loadPhotoList()).filter(p => p.bg);
+    const [all, crops] = await Promise.all([loadPhotoList(), loadCrops()]), bgs = all.filter(p => p.bg);
     if (!bgs.length) { store.set("bgPhoto", null); return applyBackground(null); }
     const now = new Date(), pick = bgs[dayDiff(new Date(now.getFullYear(), 0, 1), now) % bgs.length];
     const cached = store.get("bgPhoto", null);
-    if (cached && cached.id === pick.id) return applyBackground(cached.src);
+    const crop = crops.get(pick.id) || CROP_DEFAULT;
+    if (cached && cached.id === pick.id) { store.set("bgPhoto", { ...cached, crop }); return applyBackground(cached.src, crop); }
     const src = await loadPhotoFull(pick.row);
     if (!src.startsWith("data:image")) return;
-    store.set("bgPhoto", { id: pick.id, src }); applyBackground(src);
+    store.set("bgPhoto", { id: pick.id, src, crop }); applyBackground(src, crop);
   } catch { /* keep whatever is showing now */ }
 }
 async function openPhotos() {
   if (MODE === "claude" || !tokenValid()) return addEventNotice("📷 Family photos", "Sign in on the family site to add and choose family photos.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
   const m = modalBegin(), seq = modalSeq; m.style.setProperty("--c", "var(--accent)");
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">📷 Family photos</h3>
-    <p class="small muted" style="margin:0 0 12px">⭐ Starred photos replace the seasonal picture at the top of Home and become the site background. Star several and they take turns, a new one each day. No stars brings back the seasonal theme.</p>
+    <p class="small muted" style="margin:0 0 12px">✂️ adjusts what part of a photo shows, the zoom, and how tall the banner is. ⭐ Starred photos replace the seasonal picture at the top of Home and become the site background. Star several and they take turns, a new one each day. No stars brings back the seasonal theme.</p>
     <div class="row"><label class="btn sm" style="cursor:pointer">⬆️ Upload photos<input type="file" accept="image/*" multiple hidden></label>
       <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-newbg checked> Star new uploads</label></div>
     <p class="small pmsg" role="status" style="min-height:1.2em;margin:10px 0"></p>
@@ -2665,6 +2766,7 @@ async function openPhotos() {
     grid.innerHTML = list.length ? list.slice().reverse().map(p => `<div class="pcell ${p.bg ? "on" : ""}" data-pid="${esc(p.id)}">
         <img src="${esc(p.thumb)}" alt="Family photo added by ${esc(p.by)}" loading="lazy">
         <button type="button" class="pstar" data-pstar aria-pressed="${p.bg}" title="${p.bg ? "Stop using as background" : "Use as background"}">${p.bg ? "⭐" : "☆"}</button>
+        <button type="button" class="pcrop" data-pcrop title="Crop and size this photo" aria-label="Adjust photo">✂️</button>
         ${canDeletePhoto(p) ? `<button type="button" class="pdel" data-pdel title="Delete photo" aria-label="Delete photo">🗑</button>` : ""}
         <small>${esc(p.by || "")}${p.date ? " · " + esc(fmt(parseYMD(p.date), { month: "short", day: "numeric", year: "numeric" })) : ""}</small></div>`).join("")
       : `<p class="empty">No family photos yet. Upload one to put it at the top of the site.</p>`;
@@ -2674,6 +2776,7 @@ async function openPhotos() {
       try { await photoSetBg(id, on); msg.textContent = on ? "⭐ Added to the background rotation" : "Removed from the background"; await draw(); refreshBackground(); }
       catch (e) { fail(e); b.disabled = false; }
     });
+    grid.querySelectorAll("[data-pcrop]").forEach(b => b.onclick = () => openCropper(b.closest("[data-pid]").dataset.pid, openPhotos));
     grid.querySelectorAll("[data-pdel]").forEach(b => b.onclick = async () => {
       if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Delete?"; return setTimeout(() => { if (b.isConnected) { b.dataset.sure = ""; b.textContent = "🗑"; } }, 3000); }
       msg.textContent = "Deleting…"; b.disabled = true;
@@ -2683,11 +2786,12 @@ async function openPhotos() {
   };
   m.querySelector("input[type=file]").onchange = async ev => {
     const files = [...ev.target.files]; ev.target.value = ""; if (!files.length) return;
-    const star = m.querySelector("[data-newbg]").checked;
+    const star = m.querySelector("[data-newbg]").checked; let lastId = null;
     for (let i = 0; i < files.length; i++) {
       msg.textContent = `Uploading ${files.length > 1 ? `${i + 1} of ${files.length}` : "photo"}…`;
-      try { await uploadPhoto(files[i], star); } catch (e) { fail(e); if (e.auth) return; continue; }
+      try { lastId = await uploadPhoto(files[i], star); } catch (e) { fail(e); if (e.auth) return; continue; }
     }
+    if (files.length === 1 && lastId) { refreshBackground(); return openCropper(lastId, openPhotos); }   // one photo: go straight to framing it
     if (!/⚠️/.test(msg.textContent)) msg.textContent = `✓ ${files.length === 1 ? "Photo" : files.length + " photos"} added`;
     await draw(); refreshBackground();
   };
@@ -2797,7 +2901,7 @@ $("#modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") cl
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 
 /* ---------- go ---------- */
-{ const c = store.get("bgPhoto", null); if (c && c.src) applyBackground(c.src); }   // show the last family photo right away
+{ const c = store.get("bgPhoto", null); if (c && c.src) applyBackground(c.src, c.crop); }   // show the last family photo right away
 // Always open on Home: a link or bookmark that ends in #calendar, #chores, etc. still starts on Home.
 if (location.hash) { try { history.replaceState(null, "", location.pathname + location.search); } catch { location.hash = ""; } }
 applyTheme();
