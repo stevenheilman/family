@@ -401,7 +401,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <span class="logo" id="logoEmoji">🏡</span>
       <b><span class="pre">Our Family</span> Command Center</b>
     </a>
-    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="tabs">☰ <span id="menuLabel">Menu</span></button>
+    <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="tabs">☰ <span id="menuLabel">Menu</span> <span aria-hidden="true">▾</span></button>
     <nav class="tabs" id="tabs" aria-label="Sections">
       <a href="#home">🏠 Home</a>
       <a href="#week">📅 WAG</a>
@@ -681,7 +681,7 @@ const CONFIG = {
     /* activityLinks: clubs, teams and other activities shown on the kid's page.
        activityCalendars: calendar categories (besides school) whose events show on the kid's page.
        hideCalendars: calendars (by ID) never shown on that kid's page, e.g. the other school level. */
-    graham: { name: "Graham", emoji: "🦉", classroomLinks: [ /* { label: "Algebra I", url: "https://classroom.google.com/c/..." } */ ],
+    graham: { name: "Graham", emoji: "🦉", email: "graham.cv.heilman@gmail.com", classroomLinks: [ /* { label: "Algebra I", url: "https://classroom.google.com/c/..." } */ ],
               activityLinks: [ { emoji: "⚜️", label: "Scouts: Troop 271 Cedar Park", url: "https://www.troopwebhost.org/Troop271CedarPark/" },
                                { emoji: "📧", label: "Check your email", url: "https://mail.google.com/mail/?authuser=graham.cv.heilman@gmail.com" } ],
               activityCalendars: ["Scouts"],
@@ -689,7 +689,7 @@ const CONFIG = {
                 "leanderisd.org_250983jvv44tcs4o6q986rdcbk@group.calendar.google.com",   // District High School
                 "u35k927b4ics7n9bi5matv2qjjj18lbl@import.calendar.google.com"            // High School (Parent Square)
               ] },
-    holden: { name: "Holden", emoji: "🦊", classroomLinks: [ /* { label: "English", url: "https://classroom.google.com/c/..." } */ ],
+    holden: { name: "Holden", emoji: "🦊", email: "holden.p.heilman@gmail.com", classroomLinks: [ /* { label: "English", url: "https://classroom.google.com/c/..." } */ ],
               activityLinks: [ { emoji: "📧", label: "Check your email", url: "https://mail.google.com/mail/?authuser=holden.p.heilman@gmail.com" } ],
               activityCalendars: [],
               hideCalendars: [
@@ -1425,6 +1425,15 @@ function avatarOf(name) {
   const a = (state.avatars || {})[String(name).toLowerCase()];
   return a && a.pic ? { pic: a.pic } : { emoji: (a && a.emoji) || k.emoji };
 }
+// Only the kid themself (signed in with their own Google account) can change their avatar.
+function canEditAvatar(name) {
+  const k = Object.values(CONFIG.kids).find(x => x.name === name);
+  const me = String((state.profile && state.profile.email) || "").toLowerCase();
+  return !!(k && k.email && me && k.email.toLowerCase() === me && MODE !== "claude" && tokenValid());
+}
+const avatarHtml = name => canEditAvatar(name)
+  ? `<button class="avatar avbtn" data-act="pick-avatar" data-kid="${esc(name)}" title="Change your avatar">${avatarInner(name)}<span class="avedit">✏️</span></button>`
+  : `<span class="avatar" title="${esc(name)}">${avatarInner(name)}</span>`;
 const avatarInner = name => { const a = avatarOf(name); return a.pic ? `<img src="${esc(a.pic)}" alt="">` : esc(a.emoji); };
 function shrinkImage(file) {   // center-crop to a small square JPEG so it fits in one sheet cell
   return new Promise((res, rej) => {
@@ -1443,6 +1452,7 @@ function shrinkImage(file) {   // center-crop to a small square JPEG so it fits 
   });
 }
 async function saveAvatar(name, emoji, pic) {
+  if (!canEditAvatar(name)) throw new Error(`Only ${name} can change ${name}'s avatar.`);
   await ensureChoreTabs();
   const t = CONFIG.choresSheet;
   const j = await choresApi("/values/" + encodeURIComponent(tabRange(t.avatarTab, "A2:A")));
@@ -1454,9 +1464,10 @@ async function saveAvatar(name, emoji, pic) {
 }
 function openAvatarPicker(name) {
   if (MODE === "claude" || !tokenValid()) return addEventNotice("Choose an avatar", "Sign in on the family site to change avatars.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
+  if (!canEditAvatar(name)) return addEventNotice("Choose an avatar", `Only ${name} can change ${name}'s avatar, signed in with their own Google account.`, "");
   const m = modalBegin(); m.style.setProperty("--c", "var(--accent)");
   m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
-    <h3 id="mTitle">Choose ${esc(name)}'s avatar</h3>
+    <h3 id="mTitle">Choose your avatar, ${esc(name)}</h3>
     <div class="avpick-now"><span class="avatar big">${avatarInner(name)}</span><span class="small muted">Tap an emoji, or upload a picture.</span></div>
     <div class="avgrid">${AVATAR_CHOICES.map(e => `<button type="button" class="avopt" data-emoji="${e}" aria-label="${e}">${e}</button>`).join("")}</div>
     <div class="row" style="margin-top:14px">
@@ -1654,7 +1665,7 @@ async function renderChores() {
   const tot = weekTotals(data.log, wk), best = Math.max(...Object.values(tot).map(t => t.pts)), run = runningTotals(data.log, data.adjust);
   const now0 = new Date(), mon = earnedSince(data.log, data.adjust, ymd(new Date(now0.getFullYear(), now0.getMonth(), 1))),
         yr = earnedSince(data.log, data.adjust, ymd(new Date(now0.getFullYear(), 0, 1)));
-  const scores = `<div class="scores">${kids.map(k => `<div class="score" style="--c:${k.color}"><button class="avatar avbtn" data-act="pick-avatar" data-kid="${esc(k.name)}" title="Change ${esc(k.name)}'s avatar">${avatarInner(k.name)}<span class="avedit">✏️</span></button>
+  const scores = `<div class="scores">${kids.map(k => `<div class="score" style="--c:${k.color}">${avatarHtml(k.name)}
       <div><b class="name">${esc(k.name)}</b><div class="pts">${tot[k.name].pts}<small>points</small></div>
       <div class="small muted">${tot[k.name].n} chore${tot[k.name].n === 1 ? "" : "s"} done ${isNow ? "this week" : "that week"}</div>
       <div class="periods"><span>📅 ${fmt(now0, { month: "long" })}: <b>${mon[k.name] || 0}</b></span><span>🗓️ ${now0.getFullYear()}: <b>${yr[k.name] || 0}</b></span></div>
@@ -1836,7 +1847,7 @@ function renderKidStatic(id) {
     ? `<div class="links">${k.classroomLinks.map(l => `<a class="biglink" href="${esc(l.url)}" target="_blank" rel="noopener"><span class="em">📘</span>${esc(l.label)}</a>`).join("")}</div>`
     : `<p class="empty">No class links have been added for ${esc(k.name)} yet.</p>`;
   $("#page-" + id).innerHTML = `
-    <div class="page-head"><div class="kid-hero"><button class="avatar avbtn" data-act="pick-avatar" data-kid="${esc(k.name)}" title="Change ${esc(k.name)}'s avatar">${avatarInner(k.name)}<span class="avedit">✏️</span></button><div><h1>${esc(k.name)}</h1><p>School, activities, chores and what's coming up</p></div></div></div>
+    <div class="page-head"><div class="kid-hero">${avatarHtml(k.name)}<div><h1>${esc(k.name)}</h1><p>School, activities, chores and what's coming up</p></div></div></div>
     <div class="grid">
       <div class="card"><h2>⏳ Grading period countdown</h2>${gradingCard()}</div>
       <div class="card"><h2>🎓 Google Classroom</h2>
@@ -1874,7 +1885,7 @@ async function kidChorePoints(id) {
     const { log, adjust } = await loadChoreData(), n0 = new Date();
     const mon = earnedSince(log, adjust, ymd(new Date(n0.getFullYear(), n0.getMonth(), 1)))[CONFIG.kids[id].name] || 0,
           yr = earnedSince(log, adjust, ymd(new Date(n0.getFullYear(), 0, 1)))[CONFIG.kids[id].name] || 0;
-    const av = $("#page-" + id + " .kid-hero .avatar"); if (av) av.innerHTML = avatarInner(CONFIG.kids[id].name) + `<span class="avedit">✏️</span>`;
+    const av = $("#page-" + id + " .kid-hero .avatar"); if (av) av.outerHTML = avatarHtml(CONFIG.kids[id].name);
     const wk = ymd(mondayOf(new Date())), name = CONFIG.kids[id].name;
     const t = weekTotals(log, wk)[name] || { pts: 0, n: 0 }, run = runningTotals(log, adjust)[name] || 0;
     const doing = log.filter(l => l.week === wk && l.kid === name && l.status === "claimed").length;
@@ -2256,7 +2267,6 @@ function route() {
   const p = current();
   document.querySelectorAll("section.page").forEach(s => s.classList.toggle("active", s.id === "page-" + p));
   document.querySelectorAll("nav.tabs a").forEach(a => { if (a.getAttribute("href") === "#" + p) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current"); });
-  $("#menuLabel").textContent = $("#page-" + p).dataset.title;
   document.body.classList.toggle("xmas", p === "christmas");
   $("#tabs").classList.remove("open"); $("#menuBtn").setAttribute("aria-expanded", "false");
   document.title = `${$("#page-" + p).dataset.title.replace(/^\S+\s/, "")} · Family Command Center`;
@@ -2330,6 +2340,8 @@ $("#modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") cl
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 
 /* ---------- go ---------- */
+// Always open on Home: a link or bookmark that ends in #calendar, #chores, etc. still starts on Home.
+if (location.hash) { try { history.replaceState(null, "", location.pathname + location.search); } catch { location.hash = ""; } }
 applyTheme();
 tickCountdown(); setInterval(tickCountdown, 60e3);
 setInterval(applyTheme, 30 * 60e3);
