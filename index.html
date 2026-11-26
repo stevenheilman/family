@@ -388,11 +388,92 @@ details.sub > summary{cursor:pointer;padding:14px 16px;font-weight:800;font-size
 body.xmas{background:radial-gradient(circle at 12% 18%,rgba(179,38,47,.07) 0 3px,transparent 4px) 0 0/46px 46px,
   radial-gradient(circle at 70% 60%,rgba(30,122,70,.07) 0 3px,transparent 4px) 0 0/58px 58px,linear-gradient(180deg,#fdf6ec,#f6e9da)!important}
 body.xmas nav.tabs a[aria-current="page"]{background:#b3262f}
+/* ============================== SHARE BUTTON */
+.share-btn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:8px 14px;font-weight:800;color:var(--ink);cursor:pointer;
+  display:inline-flex;gap:6px;align-items:center;order:2;margin-left:auto;font-size:.9rem}
+.share-btn:hover{background:color-mix(in srgb,var(--accent) 12%,var(--card))}
+.brand{order:0} nav.tabs{order:1} .menu-btn{order:3}
+@media (max-width:1060px){.share-btn{order:1}.menu-btn{order:2;margin-left:0}nav.tabs{order:4}}
+@media (max-width:640px){.share-btn{padding:7px 10px;font-size:.88rem}.share-btn .lbl{display:none}}
+.share-row{display:flex;gap:8px;align-items:center}
+.share-row input{flex:1}
+.modal form.share-form{margin-top:10px}
+
+/* ============================== FAMILY PHOTO BACKGROUND */
+#sitebg{position:fixed;inset:0;z-index:-1;background-size:cover;background-position:center 30%;opacity:0;transition:opacity .6s}
+#sitebg::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,color-mix(in srgb,var(--bg1) 80%,transparent),color-mix(in srgb,var(--bg2) 88%,transparent))}
+body.has-photo{background:var(--bg2)}
+body.has-photo #sitebg{opacity:1}
+.hero-photo{position:absolute;inset:0;background-size:cover;background-position:center 30%;display:none}
+.hero-photo::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05) 25%,rgba(0,0,0,.62) 100%)}
+body.has-photo .hero{min-height:clamp(300px,46vw,480px);display:flex;align-items:flex-end;color:#fff}
+body.has-photo .hero-photo{display:block}
+body.has-photo .hero .deco,body.has-photo .hero .wave{display:none}
+body.has-photo .hero .kicker{color:#fff;opacity:.92}
+body.has-photo .hero h1,body.has-photo .hero p{text-shadow:0 2px 10px rgba(0,0,0,.45)}
+.hero-photo-btn{position:absolute;top:12px;right:12px;z-index:2;border:0;border-radius:999px;padding:7px 12px;font-weight:800;font-size:.82rem;cursor:pointer;
+  background:color-mix(in srgb,var(--card) 82%,transparent);color:var(--ink);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);box-shadow:var(--shadow)}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.pcell{position:relative;border-radius:12px;overflow:hidden;background:var(--line);border:3px solid transparent}
+.pcell.on{border-color:#e7b416}
+.pcell img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.pcell small{display:block;padding:4px 6px;font-size:.7rem;background:var(--card);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcell button{position:absolute;top:6px;border:0;border-radius:999px;min-width:32px;height:32px;padding:0 8px;cursor:pointer;font-weight:800;font-size:1rem;
+  background:rgba(255,255,255,.9);box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.pcell .pstar{left:6px}.pcell .pdel{right:6px;font-size:.85rem;color:#a23b1c}
+
+/* ============================== TO DO */
+.tdtabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tdtab{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:5px 14px 5px 5px;
+  font-weight:800;font-size:.92rem;color:var(--ink);cursor:pointer}
+.tdtab .avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:1.05rem;overflow:hidden;background:color-mix(in srgb,var(--accent2) 18%,var(--card))}
+.tdtab small{color:var(--muted);font-weight:700}
+.tdtab[aria-selected="true"]{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.tdtab[aria-selected="true"] small{color:#fff}
+.tdgrid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:start;
+  background:color-mix(in srgb,var(--accent2) 14%,var(--card));border-radius:24px;padding:clamp(10px,2.4vw,22px)}
+.tdgrid.one{max-width:720px}
+.tdcard{background:var(--card);border-radius:20px;padding:16px 16px 14px;box-shadow:var(--shadow);min-width:0}
+.tdh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.tdh .tav{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:1.5rem;overflow:hidden;flex:none;background:color-mix(in srgb,var(--accent2) 16%,var(--card))}
+.tdh .tdhn{min-width:0;flex:1}
+.tdh h2{font-family:var(--font-body);font-size:.95rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin:0}
+.tdh small{color:var(--muted);font-size:.8rem}
+.tdl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.tdi{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.tdchk{flex:none;width:22px;height:22px;margin-top:2px;border-radius:50%;border:2.5px solid color-mix(in srgb,var(--accent2) 70%,#fff);background:var(--card);cursor:pointer;padding:0}
+.tdchk:hover{background:color-mix(in srgb,var(--accent2) 30%,var(--card))}
+.tdmain{flex:1;min-width:0;border:0;background:none;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:0;display:flex;flex-direction:column;gap:3px}
+.tdt{font-weight:700;overflow-wrap:anywhere}
+.tdn{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 4px;margin-right:6px;border-radius:999px;font-size:.72rem;font-weight:800;
+  background:color-mix(in srgb,var(--accent) 14%,var(--card));color:var(--accent);vertical-align:1px}
+.tdi:first-child .tdn{background:var(--accent);color:#fff}
+.tdcost{font-size:.8rem;font-weight:700;color:#8a5a00}
+.tdcost.ok{color:#2e7d32}
+.tdbar{display:block;height:6px;border-radius:999px;background:var(--line);overflow:hidden;max-width:220px}
+.tdbar i{display:block;height:100%;background:linear-gradient(90deg,#e7b416,#2e7d32);border-radius:999px}
+.tdnotes{font-size:.8rem;color:var(--muted);overflow-wrap:anywhere;white-space:pre-wrap}
+.tdmove{display:flex;flex-direction:column;gap:2px;flex:none}
+.tdmove button{border:1px solid var(--line);background:var(--card);border-radius:8px;width:30px;height:24px;font-size:.7rem;cursor:pointer;color:var(--muted);padding:0}
+.tdmove button:disabled{opacity:.3;cursor:default}
+.tdempty{color:var(--muted);font-style:italic;margin:4px 0 8px}
+.tdadd{display:flex;gap:6px;margin-top:10px}
+.tdadd input{font:inherit;font-size:.92rem;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);min-width:0;flex:1}
+.tdadd input.tdc{flex:0 0 78px}
+.tdadd button{border:0;border-radius:10px;background:var(--accent2);color:#fff;font-weight:800;font-size:1.1rem;width:40px;cursor:pointer}
+.tdnote{color:var(--muted);min-height:1em;margin-top:4px}
+.tddone summary{cursor:pointer;font-weight:800;font-size:.85rem;color:var(--muted);margin-top:6px}
+.tddone ul{list-style:none;padding:0;margin:6px 0 0;display:flex;flex-direction:column;gap:6px}
+.tddone li{display:flex;align-items:center;gap:8px;font-size:.88rem;color:var(--muted)}
+.tddone li s{flex:1;min-width:0;overflow-wrap:anywhere}
+.tdsel{font:inherit;font-size:.95rem;font-weight:600;padding:9px 11px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+
 footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center}
 </style>
 </head>
 <body>
 
+<div id="sitebg" aria-hidden="true"></div>
 <div class="topbar">
 <div class="acct" id="acct"><div class="wrap"><span id="acctHello">👋 Welcome!</span><span id="acctInfo"></span></div></div>
 <header class="top">
@@ -401,6 +482,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <span class="logo" id="logoEmoji">🏡</span>
       <b><span class="pre">Our Family</span> Command Center</b>
     </a>
+    <button class="share-btn" id="shareBtn" data-act="share" title="Share this site by text or email">📤 <span class="lbl">Share</span></button>
     <button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="tabs">☰ <span id="menuLabel">Menu</span> <span aria-hidden="true">▾</span></button>
     <nav class="tabs" id="tabs" aria-label="Sections">
       <a href="#home">🏠 Home</a>
@@ -408,6 +490,7 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
       <a href="#calendar">📆 Calendar</a>
       <a href="#meals">🍽️ Meals</a>
       <a href="#chores">⭐ Chores</a>
+      <a href="#todo">✅ To Do</a>
       <a href="#graham">🦉 Graham</a>
       <a href="#holden">🦊 Holden</a>
       <a href="#board">📌 Board</a>
@@ -422,6 +505,8 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   <!-- ===================================================== HOME -->
   <section class="page" id="page-home" data-title="🏠 Home">
     <div class="hero" id="hero">
+      <div class="hero-photo" id="heroPhoto" aria-hidden="true"></div>
+      <button class="hero-photo-btn" data-act="photos" title="Add family photos or choose the background">📷 Photos</button>
       <div class="deco" id="deco" aria-hidden="true"></div>
       <div style="position:relative">
         <div class="kicker" id="heroKicker"></div>
@@ -543,6 +628,12 @@ footer{padding:24px 0 40px;color:var(--muted);font-size:.84rem;text-align:center
   </section>
 
   <!-- ===================================================== KIDS -->
+  <!-- ===================================================== TO DO -->
+  <section class="page" id="page-todo" data-title="✅ To Do">
+    <div class="page-head"><div><h1>To Do</h1><p>Everyone's list, in order of what's next, with what each one costs so we can save up first.</p></div></div>
+    <div id="todoBody"><span class="spinner"></span></div>
+  </section>
+
   <section class="page" id="page-graham" data-title="🦉 Graham"></section>
   <section class="page" id="page-holden" data-title="🦊 Holden"></section>
 
@@ -638,6 +729,19 @@ const CONFIG = {
   choreAdmins: ["steven.heilman2.0@gmail.com", "tinarheilman@gmail.com"],   // who can add, edit and remove chores on the site
   choresSheet: { id: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", choresTab: "Chores", choreLogTab: "Chore Log",
                  pointsTab: "Points", adjustTab: "Point Adjustments", avatarTab: "Avatars" },
+
+  /* To Do lists: the "To Do" tab (created automatically) in the Heilman Chores sheet.
+     people = whose lists show on the To Do page, in this order. */
+  todo: { sheetId: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", tab: "To Do",
+          people: [ { name: "Family", label: "Family / House", emoji: "🏡" },
+                    { name: "Steven", label: "Dad", emoji: "👨", email: "steven.heilman2.0@gmail.com" },
+                    { name: "Tina", label: "Mom", emoji: "👩", email: "tinarheilman@gmail.com" },
+                    { name: "Graham", emoji: "🦉", email: "graham.cv.heilman@gmail.com" },
+                    { name: "Holden", emoji: "🦊", email: "holden.p.heilman@gmail.com" } ] },
+
+  /* Family photos: the "Photos" tab (created automatically) in the Heilman Chores sheet.
+     Anyone in the family can upload; starred photos become the site background. */
+  photos: { sheetId: "1oFVslzG3QsvGjw4hXq7LLUTiv8YJ8BYQ2iNWsTQp-nU", tab: "Photos" },
 
   /* Christmas Lists: the "Heilman Christmas Lists" Google Sheet in the Family Hub folder.
      Row 1 = one family member per column (rename or add people right in the sheet); each cell below is one wish.
@@ -1138,7 +1242,7 @@ async function boot() {
     renderAccount();
     if (!state.calendars.length) return setStatus("error", "No calendars were found on this Google account.");
     if (MODE === "google") await loadHiddenEvents();
-    state.status = "ready"; renderAll();
+    state.status = "ready"; renderAll(); refreshBackground();
   } catch (e) {
     if (e && e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar.");
     setStatus("error", MODE === "claude" ? mcpErrorText(e) : (e.message || "Couldn't load Google Calendar."));
@@ -2250,13 +2354,354 @@ function modalBegin() { const m = $("#modal"); delete m.dataset.openEv; modalSeq
 const modalStillMine = seq => seq === modalSeq && $("#modalBg").classList.contains("open");
 
 /* =====================================================================
+   SHARE THE SITE (phone share sheet, text, email or copy link)
+   ===================================================================== */
+function openShare() {
+  const url = location.origin + location.pathname, title = "Our Family Command Center";
+  const text = "Here's our Family Command Center: calendar, meals, chores and more.";
+  const m = modalBegin(); m.style.setProperty("--c", "var(--accent)");
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
+    <h3 id="mTitle">📤 Share the site</h3>
+    <p class="small muted" style="margin:0 0 14px;overflow-wrap:anywhere">${esc(url)}</p>
+    ${navigator.share ? `<button type="button" class="btn" data-share-native style="width:100%;justify-content:center;margin-bottom:14px">📱 Share with Messages, Mail &amp; more…</button>` : ""}
+    <form class="addev share-form" data-share="sms"><label>💬 Text the link to
+      <span class="share-row"><input type="tel" name="to" placeholder="Phone number" autocomplete="tel" required><button class="btn sm" type="submit">Text</button></span></label></form>
+    <form class="addev share-form" data-share="mail"><label>✉️ Email the link to
+      <span class="share-row"><input type="email" name="to" placeholder="name@email.com" autocomplete="email" required><button class="btn sm" type="submit">Email</button></span></label></form>
+    <div class="row" style="margin-top:14px"><button type="button" class="btn ghost sm" data-share-copy>🔗 Copy link</button><span class="small muted smsg" role="status"></span></div>
+    <p class="small muted" style="margin:14px 0 0">Text and email open your Messages or Mail app with the link filled in, ready to send.</p>`;
+  const msg = m.querySelector(".smsg"), body = `${text}\n${url}`;
+  const nat = m.querySelector("[data-share-native]");
+  if (nat) nat.onclick = () => navigator.share({ title, text, url }).then(closeModal).catch(() => {});
+  m.querySelectorAll("form[data-share]").forEach(f => f.addEventListener("submit", ev => {
+    ev.preventDefault();
+    const to = f.elements.to.value.trim(); if (!to) return;
+    if (f.dataset.share === "sms") location.href = `sms:${to.replace(/[^\d+]/g, "")}?&body=${encodeURIComponent(body)}`;
+    else location.href = `mailto:${to}?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+  }));
+  m.querySelector("[data-share-copy]").onclick = async () => {
+    try { await navigator.clipboard.writeText(url); msg.textContent = "✓ Link copied"; }
+    catch { msg.textContent = "Press and hold the link above to copy it."; }
+  };
+  $("#modalBg").classList.add("open"); m.querySelector(".close").focus();
+}
+
+/* =====================================================================
+   SHARED SHEET HELPERS
+   ===================================================================== */
+const myName = () => (state.profile && state.profile.name) || "";
+const isParent = () => isChoreAdmin();
+async function ensureTab(api, title, header) {
+  const meta = await api("?fields=sheets.properties.title");
+  if ((meta.sheets || []).some(s => s.properties.title === title)) return;
+  await api(":batchUpdate", { method: "POST", body: JSON.stringify({ requests: [{ addSheet: { properties: { title, gridProperties: { frozenRowCount: 1 } } } }] }) });
+  await api("/values/" + encodeURIComponent(tabRange(title, `A1:${String.fromCharCode(64 + header.length)}1`)) + "?valueInputOption=RAW",
+    { method: "PUT", body: JSON.stringify({ values: [header] }) });
+}
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+const nowStamp = () => new Date().toLocaleString("en-US", { timeZone: CONFIG.timeZone });
+const signInNotice = what => `<div class="notice"><b>Sign in to see ${what}</b>It's shared with the whole family through Google.
+  <div class="row" style="margin-top:10px"><button class="btn sm" data-act="signin">🔐 Sign in with Google</button></div></div>`;
+const sheetProblem = (e, sheetId, retryAct) => e.kind === "scope"
+  ? `<div class="notice"><b>One more permission needed</b>Allow the site to use Google Sheets.<div class="row" style="margin-top:10px"><button class="btn sm" data-act="sheets-consent">✅ Allow</button></div></div>`
+  : e.kind === "access" ? `<div class="notice warn"><b>No access to the family sheet</b>This Google account can't open it. Ask Steven to share it with you (as an editor).</div>`
+  : `<div class="notice warn"><b>Couldn't load this right now</b>${esc(e.message)}<div class="row" style="margin-top:10px"><button class="btn sm" data-act="${retryAct}">↻ Try again</button></div>
+     <p class="small"><a href="https://docs.google.com/spreadsheets/d/${sheetId}/edit" target="_blank" rel="noopener">Open the sheet ↗</a></p></div>`;
+
+/* =====================================================================
+   TO DO: a prioritized backlog for each family member, with costs to save up for.
+   Saved in the "To Do" tab: A ID · B Whose list · C To do · D Priority · E Cost · F Saved so far
+                             G Status (Open/Done) · H Notes · I Added by · J Updated
+   ===================================================================== */
+const todoApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.todo.sheetId);
+const TODO_HEAD = ["ID", "Whose list", "To do", "Priority (1 = first)", "Cost ($)", "Saved so far ($)", "Status (Open / Done)", "Notes", "Added by", "Updated"];
+let todoTabOk = false, todoView = store.get("todoView", "");
+const money = v => { const n = Number(String(v ?? "").replace(/[$,\s]/g, "")); return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0; };
+const usd = n => n.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+const byPri = (a, b) => (a.pri - b.pri) || (a.row - b.row);
+const sameWho = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+async function loadTodos() {
+  if (!todoTabOk) { await ensureTab(todoApi, CONFIG.todo.tab, TODO_HEAD); todoTabOk = true; }
+  const j = await todoApi("/values/" + encodeURIComponent(tabRange(CONFIG.todo.tab, "A2:J")) + "?valueRenderOption=UNFORMATTED_VALUE");
+  return (j.values || []).map((r, i) => ({
+    id: String(r[0] || "").trim() || `row${i + 2}`, who: String(r[1] || "").trim(), title: String(r[2] || "").trim(),
+    pri: Number(r[3]) || 999, cost: money(r[4]), saved: money(r[5]), done: /^done$/i.test(String(r[6] || "").trim()),
+    notes: String(r[7] || "").trim(), by: String(r[8] || "").trim(), row: i + 2
+  })).filter(t => t.title && t.who);
+}
+function todoPeople(list) {
+  const ppl = CONFIG.todo.people.map(p => ({ ...p }));
+  list.forEach(t => { if (!ppl.some(p => sameWho(p.name, t.who))) ppl.push({ name: t.who, emoji: "📝" }); });
+  return ppl;
+}
+const todoIcon = p => Object.values(CONFIG.kids).some(k => k.name === p.name) ? avatarInner(p.name) : esc(p.emoji || "📝");
+function myTodoName() {
+  const e = String((state.profile && state.profile.email) || "").toLowerCase();
+  const p = CONFIG.todo.people.find(x => x.email && x.email.toLowerCase() === e);
+  return p ? p.name : "";
+}
+async function todoWrite(item, existing) {
+  const t = CONFIG.todo.tab;
+  const row = [item.id, item.who, item.title, item.pri, item.cost || "", item.saved || "", item.done ? "Done" : "Open", item.notes || "", existing ? existing.by : myName(), nowStamp()];
+  if (existing) await todoApi("/values/" + encodeURIComponent(tabRange(t, `A${existing.row}:J${existing.row}`)) + "?valueInputOption=RAW", { method: "PUT", body: JSON.stringify({ values: [row] }) });
+  else await todoApi("/values/" + encodeURIComponent(tabRange(t, "A:J")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS", { method: "POST", body: JSON.stringify({ values: [row] }) });
+}
+async function todoAdd(who, title, cost) {
+  const list = await loadTodos();
+  const last = list.filter(x => sameWho(x.who, who) && !x.done).reduce((m, x) => Math.max(m, x.pri === 999 ? 0 : x.pri), 0);
+  await todoWrite({ id: newId(), who, title, pri: last + 1, cost, saved: 0, done: false, notes: "" }, null);
+}
+async function todoUpdate(id, changes) {
+  const list = await loadTodos(), cur = list.find(x => x.id === id);   // re-read so we change the right row
+  if (!cur) throw new Error("That to-do isn't in the list anymore.");
+  const next = { ...cur, ...changes };
+  if (changes.who && !sameWho(changes.who, cur.who)) next.pri = list.filter(x => sameWho(x.who, changes.who) && !x.done).reduce((m, x) => Math.max(m, x.pri === 999 ? 0 : x.pri), 0) + 1;
+  if (changes.done === false && cur.done) next.pri = 0.5;   // reopened → back near the top
+  await todoWrite(next, cur);
+}
+async function todoMove(id, dir) {
+  const list = await loadTodos(), cur = list.find(x => x.id === id); if (!cur) throw new Error("That to-do isn't in the list anymore.");
+  const open = list.filter(x => sameWho(x.who, cur.who) && !x.done).sort(byPri);
+  const i = open.indexOf(cur), j = i + dir; if (j < 0 || j >= open.length) return;
+  [open[i], open[j]] = [open[j], open[i]];
+  const data = open.map((x, k) => ({ x, p: k + 1 })).filter(o => o.x.pri !== o.p)
+    .map(o => ({ range: tabRange(CONFIG.todo.tab, `D${o.x.row}`), values: [[o.p]] }));
+  if (data.length) await todoApi("/values:batchUpdate", { method: "POST", body: JSON.stringify({ valueInputOption: "RAW", data }) });
+}
+async function todoDelete(id) {
+  const list = await loadTodos(), cur = list.find(x => x.id === id); if (!cur) return;
+  await todoApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(CONFIG.todo.tab, `A${cur.row}:J${cur.row}`)] }) });
+}
+function todoItemHtml(t, i, n) {
+  const funded = t.cost > 0 && t.saved >= t.cost, pct = t.cost ? Math.min(100, Math.round(t.saved / t.cost * 100)) : 0;
+  const cash = !t.cost ? "" : funded ? `<span class="tdcost ok">✅ ${usd(t.cost)} saved · ready to start</span>`
+    : `<span class="tdcost">💲 ${usd(t.cost)}${t.saved ? ` · ${usd(t.saved)} saved · ${usd(t.cost - t.saved)} to go` : " · need to save"}</span><span class="tdbar"><i style="width:${pct}%"></i></span>`;
+  return `<li class="tdi" data-todo="${esc(t.id)}">
+    <button class="tdchk" data-act="todo-done" title="Mark done" aria-label="Mark ${esc(t.title)} done"></button>
+    <button class="tdmain" data-act="todo-edit" aria-label="Edit ${esc(t.title)}"><span class="tdt"><span class="tdn">${i + 1}</span>${esc(t.title)}</span>${cash}
+      ${t.notes ? `<span class="tdnotes">${esc(t.notes)}</span>` : ""}</button>
+    <span class="tdmove"><button data-act="todo-up" ${i === 0 ? "disabled" : ""} aria-label="Move up" title="Higher priority">▲</button><button data-act="todo-down" ${i === n - 1 ? "disabled" : ""} aria-label="Move down" title="Lower priority">▼</button></span>
+  </li>`;
+}
+function todoCardHtml(p, list) {
+  const mine = list.filter(t => sameWho(t.who, p.name)), open = mine.filter(t => !t.done).sort(byPri), done = mine.filter(t => t.done);
+  const total = open.reduce((s, t) => s + t.cost, 0), need = open.reduce((s, t) => s + Math.max(0, t.cost - t.saved), 0);
+  return `<div class="tdcard" data-who="${esc(p.name)}">
+    <div class="tdh"><span class="avatar tav">${todoIcon(p)}</span><div class="tdhn"><h2>${esc(p.label || p.name)}</h2>
+      <small>${open.length} to do${total ? ` · ${usd(total)} total` : ""}</small></div>
+      ${need ? `<span class="tag" style="--c:#b7791f" title="Still to save for this list">💰 Save ${usd(need)}</span>` : ""}</div>
+    ${open.length ? `<ol class="tdl">${open.map((t, i) => todoItemHtml(t, i, open.length)).join("")}</ol>` : `<p class="tdempty">Nothing here yet ✨</p>`}
+    <form class="tdadd" data-todo-add data-who="${esc(p.name)}">
+      <input name="title" placeholder="Add a to-do…" aria-label="Add a to-do for ${esc(p.label || p.name)}" maxlength="200" required>
+      <input name="cost" inputmode="decimal" placeholder="$ cost" aria-label="Cost (optional)" class="tdc">
+      <button aria-label="Add">＋</button></form>
+    <div class="tdnote small" role="status"></div>
+    ${done.length ? `<details class="tddone"><summary>✓ Done (${done.length})</summary><ul>${done.map(t => `<li data-todo="${esc(t.id)}"><s>${esc(t.title)}</s>${t.cost ? ` <small>${usd(t.cost)}</small>` : ""}
+      <button class="btn ghost sm" data-act="todo-undo">↺ Undo</button></li>`).join("")}</ul></details>` : ""}
+  </div>`;
+}
+async function renderTodo() {
+  const el = $("#todoBody");
+  if (MODE === "claude") { el.innerHTML = `<p class="empty">To-do lists work on the family site (they're saved in the family's Google Sheet), not in this preview.</p>`; return; }
+  if (!CONFIG.googleClientId) { el.innerHTML = statusBlock(); return; }
+  if (!tokenValid()) { el.innerHTML = signInNotice("everyone's to-do lists"); return; }
+  if (!el.querySelector(".tdgrid")) el.innerHTML = `<p class="muted"><span class="spinner"></span> Loading the to-do lists…</p>`;
+  let list;
+  try { list = await loadTodos(); }
+  catch (e) { if (e.auth) throw e; el.innerHTML = sheetProblem(e, CONFIG.todo.sheetId, "retry-todo"); return; }
+  const people = todoPeople(list), mine = myTodoName();
+  let view = todoView || (window.innerWidth < 760 && mine ? mine : "all");
+  if (view !== "all" && !people.some(p => p.name === view)) view = "all";
+  const tabs = [{ name: "all", label: "Everyone", emoji: "👪" }, ...people];
+  el.innerHTML = `<div class="tdtabs" role="tablist" aria-label="Whose list">${tabs.map(p => `<button role="tab" class="tdtab" aria-selected="${p.name === view}" data-act="todo-view" data-who="${esc(p.name)}">
+      <span class="avatar">${p.name === "all" ? "👪" : todoIcon(p)}</span>${esc(p.label || p.name)}${p.name === mine ? " <small>(me)</small>" : ""}</button>`).join("")}</div>
+    <div class="tdgrid ${view === "all" ? "" : "one"}">${(view === "all" ? people : people.filter(p => p.name === view)).map(p => todoCardHtml(p, list)).join("")}</div>
+    <p class="small muted" style="margin-top:14px">Tap a to-do to change its cost, record money saved, add notes or move it to someone else's list. ▲▼ set the order: #1 is up next.
+      Everything is saved in the <a href="https://docs.google.com/spreadsheets/d/${CONFIG.todo.sheetId}/edit" target="_blank" rel="noopener">family sheet ↗</a> (To Do tab).</p>`;
+}
+async function todoAction(btn, fn, busy) {
+  const card = btn.closest(".tdcard"), note = card && card.querySelector(".tdnote");
+  const ctl = card ? [...card.querySelectorAll("button,input")] : [];
+  if (note) note.textContent = busy; ctl.forEach(b => b.disabled = true);
+  try { await fn(); await renderTodo(); }
+  catch (e) {
+    if (e.auth) return setStatus("needs-signin", "Your Google sign-in expired. Sign in again.");
+    if (note) note.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message);
+    ctl.forEach(b => b.disabled = false);
+  }
+}
+async function openTodoEditor(id) {
+  let list; try { list = await loadTodos(); } catch (e) { return addEventNotice("To do", esc(e.message), ""); }
+  const t = list.find(x => x.id === id); if (!t) return renderTodo();
+  const people = todoPeople(list);
+  const m = modalBegin(); m.style.setProperty("--c", "var(--accent2)");
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button>
+    <h3 id="mTitle">✏️ Edit to-do</h3>
+    <form class="addev">
+      <label>To do<input name="title" value="${esc(t.title)}" maxlength="200" required></label>
+      <div class="two"><label>Cost ($)<input name="cost" inputmode="decimal" value="${t.cost || ""}" placeholder="0"></label>
+        <label>Saved so far ($)<input name="saved" inputmode="decimal" value="${t.saved || ""}" placeholder="0"></label></div>
+      <label>Whose list<select name="who" class="tdsel">${people.map(p => `<option ${sameWho(p.name, t.who) ? "selected" : ""} value="${esc(p.name)}">${esc(p.label ? `${p.label} (${p.name})` : p.name)}</option>`).join("")}</select></label>
+      <label>Notes<textarea name="notes" maxlength="1000" placeholder="Where to buy it, who'll help, links…">${esc(t.notes)}</textarea></label>
+      ${t.by ? `<p class="small muted" style="margin:0">Added by ${esc(t.by)}</p>` : ""}
+      <p class="err" role="alert"></p>
+      <div class="row"><button class="btn" type="submit">💾 Save</button><button class="btn ghost" type="button" data-markdone>✓ Mark done</button>
+        <button class="btn ghost sm" type="button" data-del style="margin-left:auto;color:#a23b1c">🗑️ Delete</button></div>
+    </form>`;
+  const f = m.querySelector("form"), err = f.querySelector(".err"), b = f.querySelector("button[type=submit]");
+  const run = async (fn, label) => {
+    m.querySelectorAll("button").forEach(x => x.disabled = true); err.textContent = label;
+    try { await fn(); closeModal(); renderTodo(); }
+    catch (e) { if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
+      err.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message); m.querySelectorAll("button").forEach(x => x.disabled = false); }
+  };
+  f.addEventListener("submit", ev => {
+    ev.preventDefault();
+    const title = f.elements.title.value.trim(); if (!title) { err.textContent = "Give it a name."; return; }
+    run(() => todoUpdate(id, { title, cost: money(f.elements.cost.value), saved: money(f.elements.saved.value), who: f.elements.who.value, notes: f.elements.notes.value.trim() }), "Saving…");
+  });
+  m.querySelector("[data-markdone]").onclick = () => run(() => todoUpdate(id, { done: true }), "Saving…");
+  const del = m.querySelector("[data-del]");
+  del.onclick = () => { if (!del.dataset.sure) { del.dataset.sure = "1"; del.textContent = "Tap again to delete"; return; } run(() => todoDelete(id), "Deleting…"); };
+  $("#modalBg").classList.add("open"); f.elements.title.focus();
+}
+document.addEventListener("submit", ev => {
+  const f = ev.target.closest("form[data-todo-add]"); if (!f) return;
+  ev.preventDefault();
+  const title = f.elements.title.value.trim(), cost = money(f.elements.cost.value); if (!title) return;
+  todoAction(f, () => todoAdd(f.dataset.who, title, cost), "Adding…");
+});
+
+/* =====================================================================
+   FAMILY PHOTOS: pictures anyone in the family uploads. Starred ones replace the
+   seasonal picture at the top of Home and become the site background (several = a new one each day).
+   Saved in the "Photos" tab: A ID · B Added by · C Date · D Added by (email) · E Background (Yes)
+                              F Thumbnail · G… the picture, split across cells (a cell holds 50,000 characters)
+   ===================================================================== */
+const photoApi = (path, opts = {}) => sheetsApi(path, opts, CONFIG.photos.sheetId);
+const PHOTO_HEAD = ["ID", "Added by", "Date", "Added by (email)", "Background (Yes = use)", "Thumbnail", "Picture (continues in the cells to the right)"];
+const PCHUNK = 45000, PMAXCELLS = 20;   // columns G..Z
+let photoTabOk = false;
+async function loadPhotoList() {
+  if (!photoTabOk) { await ensureTab(photoApi, CONFIG.photos.tab, PHOTO_HEAD); photoTabOk = true; }
+  const j = await photoApi("/values/" + encodeURIComponent(tabRange(CONFIG.photos.tab, "A2:F")));
+  return (j.values || []).map((r, i) => ({ id: String(r[0] || ""), by: String(r[1] || ""), date: String(r[2] || ""), email: String(r[3] || "").toLowerCase(),
+    bg: /^y/i.test(String(r[4] || "")), thumb: String(r[5] || ""), row: i + 2 })).filter(p => p.id && p.thumb.startsWith("data:image"));
+}
+async function loadPhotoFull(row) {
+  const j = await photoApi("/values/" + encodeURIComponent(tabRange(CONFIG.photos.tab, `G${row}:Z${row}`)));
+  return ((j.values || [])[0] || []).join("");
+}
+function fitImage(file, max, limit) {   // shrink to fit max×max as a JPEG no longer than `limit` characters
+  return new Promise((res, rej) => {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let side = max, out = "";
+      for (let tries = 0; tries < 6; tries++) {
+        const s = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement("canvas");
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        for (let q = .82; q >= .5; q -= .08) { out = c.toDataURL("image/jpeg", q); if (out.length <= limit) return res(out); }
+        side = Math.round(side * .8);
+      }
+      rej(new Error("That picture is too big. Try a different one."));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error(`"${file.name}" isn't a picture this browser can open. Try a JPEG or PNG.`)); };
+    img.src = url;
+  });
+}
+async function uploadPhoto(file, asBackground) {
+  const [full, thumb] = await Promise.all([fitImage(file, 1800, PCHUNK * PMAXCELLS), fitImage(file, 360, PCHUNK)]);
+  const parts = []; for (let i = 0; i < full.length; i += PCHUNK) parts.push(full.slice(i, i + PCHUNK));
+  const row = [newId(), myName(), ymd(new Date()), String((state.profile && state.profile.email) || ""), asBackground ? "Yes" : "", thumb, ...parts];
+  await photoApi("/values/" + encodeURIComponent(tabRange(CONFIG.photos.tab, "A:Z")) + ":append?valueInputOption=RAW&insertDataOption=INSERT_ROWS",
+    { method: "POST", body: JSON.stringify({ values: [row] }) });
+}
+async function photoChange(id, fn) {
+  const list = await loadPhotoList(), p = list.find(x => x.id === id);   // re-read so we change the right row
+  if (!p) throw new Error("That photo isn't there anymore.");
+  await fn(p);
+}
+const photoSetBg = (id, on) => photoChange(id, p => photoApi("/values/" + encodeURIComponent(tabRange(CONFIG.photos.tab, `E${p.row}`)) + "?valueInputOption=RAW",
+  { method: "PUT", body: JSON.stringify({ values: [[on ? "Yes" : ""]] }) }));
+const photoDelete = id => photoChange(id, p => photoApi("/values:batchClear", { method: "POST", body: JSON.stringify({ ranges: [tabRange(CONFIG.photos.tab, `A${p.row}:Z${p.row}`)] }) }));
+const canDeletePhoto = p => isParent() || (p.email && p.email === String((state.profile && state.profile.email) || "").toLowerCase());
+
+function applyBackground(src) {
+  document.body.classList.toggle("has-photo", !!src);
+  $("#sitebg").style.backgroundImage = src ? `url("${src}")` : "";
+  $("#heroPhoto").style.backgroundImage = src ? `url("${src}")` : "";
+}
+async function refreshBackground() {
+  if (MODE === "claude" || !tokenValid()) return;
+  try {
+    const bgs = (await loadPhotoList()).filter(p => p.bg);
+    if (!bgs.length) { store.set("bgPhoto", null); return applyBackground(null); }
+    const now = new Date(), pick = bgs[dayDiff(new Date(now.getFullYear(), 0, 1), now) % bgs.length];
+    const cached = store.get("bgPhoto", null);
+    if (cached && cached.id === pick.id) return applyBackground(cached.src);
+    const src = await loadPhotoFull(pick.row);
+    if (!src.startsWith("data:image")) return;
+    store.set("bgPhoto", { id: pick.id, src }); applyBackground(src);
+  } catch { /* keep whatever is showing now */ }
+}
+async function openPhotos() {
+  if (MODE === "claude" || !tokenValid()) return addEventNotice("📷 Family photos", "Sign in on the family site to add and choose family photos.", `<button class="btn sm" data-act="signin">🔐 Sign in with Google</button>`);
+  const m = modalBegin(), seq = modalSeq; m.style.setProperty("--c", "var(--accent)");
+  m.innerHTML = `<button class="close" aria-label="Close" data-act="close">×</button><h3 id="mTitle">📷 Family photos</h3>
+    <p class="small muted" style="margin:0 0 12px">⭐ Starred photos replace the seasonal picture at the top of Home and become the site background. Star several and they take turns, a new one each day. No stars brings back the seasonal theme.</p>
+    <div class="row"><label class="btn sm" style="cursor:pointer">⬆️ Upload photos<input type="file" accept="image/*" multiple hidden></label>
+      <label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" data-newbg checked> Star new uploads</label></div>
+    <p class="small pmsg" role="status" style="min-height:1.2em;margin:10px 0"></p>
+    <div class="pgrid"><p class="muted"><span class="spinner"></span> Loading photos…</p></div>`;
+  $("#modalBg").classList.add("open");
+  const msg = m.querySelector(".pmsg"), grid = m.querySelector(".pgrid");
+  const fail = e => { if (e.auth) { closeModal(); return setStatus("needs-signin", "Your Google sign-in expired. Sign in again."); }
+    msg.textContent = "⚠️ " + (e.kind === "access" ? "This account can't edit the family sheet." : e.message); };
+  const draw = async () => {
+    let list; try { list = await loadPhotoList(); } catch (e) { grid.innerHTML = ""; return fail(e); }
+    if (seq !== modalSeq) return;
+    grid.innerHTML = list.length ? list.slice().reverse().map(p => `<div class="pcell ${p.bg ? "on" : ""}" data-pid="${esc(p.id)}">
+        <img src="${esc(p.thumb)}" alt="Family photo added by ${esc(p.by)}" loading="lazy">
+        <button type="button" class="pstar" data-pstar aria-pressed="${p.bg}" title="${p.bg ? "Stop using as background" : "Use as background"}">${p.bg ? "⭐" : "☆"}</button>
+        ${canDeletePhoto(p) ? `<button type="button" class="pdel" data-pdel title="Delete photo" aria-label="Delete photo">🗑</button>` : ""}
+        <small>${esc(p.by || "")}${p.date ? " · " + esc(fmt(parseYMD(p.date), { month: "short", day: "numeric", year: "numeric" })) : ""}</small></div>`).join("")
+      : `<p class="empty">No family photos yet. Upload one to put it at the top of the site.</p>`;
+    grid.querySelectorAll("[data-pstar]").forEach(b => b.onclick = async () => {
+      const id = b.closest("[data-pid]").dataset.pid, on = b.getAttribute("aria-pressed") !== "true";
+      msg.textContent = "Saving…"; b.disabled = true;
+      try { await photoSetBg(id, on); msg.textContent = on ? "⭐ Added to the background rotation" : "Removed from the background"; await draw(); refreshBackground(); }
+      catch (e) { fail(e); b.disabled = false; }
+    });
+    grid.querySelectorAll("[data-pdel]").forEach(b => b.onclick = async () => {
+      if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Delete?"; return setTimeout(() => { if (b.isConnected) { b.dataset.sure = ""; b.textContent = "🗑"; } }, 3000); }
+      msg.textContent = "Deleting…"; b.disabled = true;
+      try { await photoDelete(b.closest("[data-pid]").dataset.pid); msg.textContent = "Deleted"; await draw(); refreshBackground(); }
+      catch (e) { fail(e); b.disabled = false; }
+    });
+  };
+  m.querySelector("input[type=file]").onchange = async ev => {
+    const files = [...ev.target.files]; ev.target.value = ""; if (!files.length) return;
+    const star = m.querySelector("[data-newbg]").checked;
+    for (let i = 0; i < files.length; i++) {
+      msg.textContent = `Uploading ${files.length > 1 ? `${i + 1} of ${files.length}` : "photo"}…`;
+      try { await uploadPhoto(files[i], star); } catch (e) { fail(e); if (e.auth) return; continue; }
+    }
+    if (!/⚠️/.test(msg.textContent)) msg.textContent = `✓ ${files.length === 1 ? "Photo" : files.length + " photos"} added`;
+    await draw(); refreshBackground();
+  };
+  draw();
+}
+
+/* =====================================================================
    ROUTING + EVENTS
    ===================================================================== */
-const PAGES = ["home", "week", "calendar", "meals", "chores", "graham", "holden", "board", "christmas"];
+const PAGES = ["home", "week", "calendar", "meals", "chores", "todo", "graham", "holden", "board", "christmas"];
 function current() { const h = (location.hash || "").slice(1); return PAGES.includes(h) ? h : "home"; }
 function renderCurrent() {
   const p = current();
-  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, chores: renderChores, christmas: renderChristmas, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
+  const run = { home: renderHome, week: renderWeek, calendar: renderMonth, meals: renderMeals, chores: renderChores, todo: renderTodo, christmas: renderChristmas, graham: () => renderKid("graham"), holden: () => renderKid("holden") }[p];
   if (run) Promise.resolve(run()).then(setSync).catch(err => {
     if (err && err.auth) { gToken = null; return setStatus("needs-signin", "Your Google sign-in expired. Sign in again to refresh the calendar."); }
     setStatus("error", MODE === "claude" ? mcpErrorText(err) : (err.message || "Couldn't load events."));
@@ -2290,6 +2735,18 @@ document.addEventListener("click", ev => {
   if (t.dataset.act === "add-chore") return openChoreEditor(null);
   if (t.dataset.act === "chore-edit") return openChoreEditor(t.closest("[data-chore]").dataset.chore);
   if (t.dataset.act === "pick-avatar") return openAvatarPicker(t.dataset.kid);
+  if (t.dataset.act === "share") return openShare();
+  if (t.dataset.act === "photos") return openPhotos();
+  if (t.dataset.act === "retry-todo") { todoTabOk = false; return renderTodo(); }
+  if (t.dataset.act === "todo-view") { todoView = t.dataset.who; store.set("todoView", todoView); return renderTodo(); }
+  if (t.dataset.act && t.dataset.act.startsWith("todo-")) {
+    const id = (t.closest("[data-todo]") || {}).dataset?.todo; if (!id) return;
+    if (t.dataset.act === "todo-edit") return openTodoEditor(id);
+    if (t.dataset.act === "todo-up") return todoAction(t, () => todoMove(id, -1), "Moving…");
+    if (t.dataset.act === "todo-down") return todoAction(t, () => todoMove(id, 1), "Moving…");
+    if (t.dataset.act === "todo-done") return todoAction(t, () => todoUpdate(id, { done: true }), "Nice work! ✓");
+    if (t.dataset.act === "todo-undo") return todoAction(t, () => todoUpdate(id, { done: false }), "Putting it back…");
+  }
   if (t.dataset.act === "chore-claim") return choreAction(t, t.dataset.kid, "claimed");
   if (t.dataset.act === "chore-done") return choreAction(t, "", "done");
   if (t.dataset.act === "chore-undo") return choreAction(t, "", "undo");
@@ -2340,11 +2797,12 @@ $("#modalBg").addEventListener("click", e => { if (e.target.id === "modalBg") cl
 document.addEventListener("keydown", e => { if (e.key === "Escape") closeModal(); });
 
 /* ---------- go ---------- */
+{ const c = store.get("bgPhoto", null); if (c && c.src) applyBackground(c.src); }   // show the last family photo right away
 // Always open on Home: a link or bookmark that ends in #calendar, #chores, etc. still starts on Home.
 if (location.hash) { try { history.replaceState(null, "", location.pathname + location.search); } catch { location.hash = ""; } }
 applyTheme();
 tickCountdown(); setInterval(tickCountdown, 60e3);
-setInterval(applyTheme, 30 * 60e3);
+setInterval(applyTheme, 30 * 60e3); setInterval(refreshBackground, 60 * 60e3);
 loadWeather(); setInterval(loadWeather, 30 * 60e3);
 renderEmbeds();
 route();
